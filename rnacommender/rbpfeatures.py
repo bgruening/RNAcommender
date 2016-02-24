@@ -2,10 +2,11 @@ from __future__ import print_function
 
 import argparse
 import pandas as pd
+import sys
+import subprocess as sp
 from urllib2 import urlopen, URLError
 from uuid import uuid4
 from os import mkdir,rmdir
-import sys
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -90,20 +91,33 @@ class RBPVectorizer():
 
         print("Determining domain list...", end=' ')
         sys.stdout.flush()
-        # determine the accession numbers of necessary seeds to download from pfam
-        dom_download_list = self._overlapping_domains()
+        # determine the accession numbers of the pfam domains
+        dom_list = self._overlapping_domains()
         print("Done.\n")
         sys.stdout.flush()
 
-        mkdir("%s/seeds" % temp_fold)
-        print("Downloading %i domain seeds from http://pfam.xfam.org/..." % len(dom_download_list), end=' ')
+        # download the alignment of the seeds from pfam and convert it to fasta
+        seeds_fold = "%s/seeds" % temp_fold
+        mkdir(seeds_fold)
+        print("Downloading %i domain seeds from http://pfam.xfam.org/..." % len(dom_list), end=' ')
         sys.stdout.flush()
-        for acc in dom_download_list:
+        for acc in dom_list:
             seed = self._dowload_seed_seqs(acc)
             if seed is not None:
                 nf = open("%s/seeds/%s.fa" % (temp_fold,acc),"w")
                 nf.write(seed)
                 nf.close()
+        print("Done.\n")
+        sys.stdout.flush()
+
+        # compile the models using SAM 3.5
+        mod_fold = "%s/mod" % temp_fold
+        mkdir(mod_fold)
+        print("Building %i HMM models..." % len(dom_list))
+        sys.stdout.flush()
+        for i,acc in enumerate(dom_list):
+            cmd = "buildmodel %s/%s -train %s/%s.fa -randseed 0" % (mod_fold,acc,seeds_fold,acc)
+            sp.check_call(cmd,shell=True)
         print("Done.\n")
         sys.stdout.flush()
 
