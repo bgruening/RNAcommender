@@ -4,10 +4,10 @@ import argparse
 import pandas as pd
 import sys
 import subprocess as sp
-from uuid import uuid4
+import uuid
 from os import mkdir,rmdir
 
-import pfam_interface
+import pfam_utils
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -18,32 +18,45 @@ __status__ = "Production"
 
 
 class RBPVectorizer():
-    def __init__(self,fasta_ref,fasta_sel,pfam_scan_ref=None,pfam_scan_sel=None):
+    def __init__(self,fasta_ref,fasta_sel,pfam_scan_ref=None,pfam_scan_sel=None,verbose=True):
         self.fasta_ref = fasta_ref
         self.fasta_sel = fasta_sel
         self.pfam_scan_ref = pfam_scan_ref
         self.pfam_scan_sel = pfam_scan_sel
+        self.verbose = verbose
+
+        self.temp_fold = "temp_" + str(uuid.uuid4())
+        self.dom_ref_fold = "%s/domains_ref" % self.temp_fold
+        self.dom_sel_fold = "%s/domains_sel" % self.temp_fold
+        self.seeds_fold = "%s/seeds" % self.temp_fold
+        self.mod_fold = "%s/mod" % self.temp_fold
 
     def _overlapping_domains(self):
-        cols = ["seq_id","alignment_start","alignment_end","envelope_start","envelope_end","hmm_acc","hmm_name","type","hmm_start","hmm_end","hmm_length","bit_score","E-value","significance","clan"]
+        if self.verbose:
+            print("Determining domain list...", end=' ')
+            sys.stdout.flush()
+
         if self.pfam_scan_ref != self.pfam_scan_sel:
-            data_ref = pd.read_table(self.pfam_scan_ref,
-                sep="\s*",skip_blank_lines=True,skiprows=1,names=cols)
-            doms_ref = set(a.split('.')[0] for a in data_ref["hmm_acc"])
-            data_sel = pd.read_table(self.pfam_scan_sel,
-                sep="\s*",skip_blank_lines=True,skiprows=1,names=cols)
-            doms_sel = set(a.split('.')[0] for a in data_sel["hmm_acc"])
-            return sorted(list(doms_ref & doms_sel))
+            data_ref = pfam_utils.read_pfam_output(self.pfam_scan_ref)
+            dom_ref = set(a.split('.')[0] for a in data_ref["hmm_acc"])
+            data_sel = pfam_utils.read_pfam_output(self.pfam_scan_sel)
+            dom_sel = set(a.split('.')[0] for a in data_sel["hmm_acc"])
+            dom_list = sorted(list(doms_ref & doms_sel))
         else:
-            data = pd.read_table(self.pfam_scan_ref,
-                sep="\s*",skip_blank_lines=True,skiprows=1,names=cols)
+            data = pfam_utils.read_pfam_output(self.pfam_scan_ref)
             data["hmm_acc"] = [a.split('.')[0] for a in data["hmm_acc"]]
             rbp_dom = data[["seq_id","hmm_acc"]].drop_duplicates()
             group = rbp_dom.groupby("hmm_acc").count()
             doms = (group[group>1]).dropna().index
-            return sorted(list(doms))
+            dom_list = sorted(list(doms))
 
-    def _prepare_domains(self,dom_list,dom_ref_fold,dom_sel_fold):
+        if self.verbose:
+            print("Done.\n")
+            sys.stdout.flush()
+
+        return dom_list
+
+    def _prepare_domains(self,dom_list):
 
         def import_fasta(fasta_file):
             dic = {}
@@ -76,63 +89,77 @@ class RBPVectorizer():
             for acc in dom_list:
                 out_file_dic[acc].close()
 
-        fasta_ref = import_fasta(self.fasta_ref)
-        prepare_domains(fasta_ref,dom_list,self.pfam_scan_ref,dom_ref_fold)
+        if self.verbose:
+            print("Preparing fasta files for %i domains..." % len(dom_list), end=' ')
+            sys.stdout.flush()
 
+        mkdir(self.dom_ref_fold)
+        fasta_ref = import_fasta(self.fasta_ref)
+        prepare_domains(fasta_ref,dom_list,self.pfam_scan_ref,self.dom_ref_fold)
+
+        mkdir(self.dom_sel_fold)
         fasta_sel = import_fasta(self.fasta_sel)
-        prepare_domains(fasta_sel,dom_list,self.pfam_scan_sel,dom_sel_fold)
+        prepare_domains(fasta_sel,dom_list,self.pfam_scan_sel,self.dom_sel_fold)
+
+        if self.verbose:
+            print("Done.\n")
+            sys.stdout.flush()
+
+    def _download_seeds(self,dom_list):
+        if self.verbose:
+            print("Downloading %i domain seeds from http://pfam.xfam.org/..." % len(dom_list), end=' ')
+            sys.stdout.flush()
+
+        mkdir(self.seeds_fold)
+
+        for acc in dom_list:
+            seed = pfam_utils.download_seed_seqs(acc)
+            if seed is not None:
+                nf = open("%s/%s.fa" % (self.seeds_fold,acc),"w")
+                nf.write(seed)
+                nf.close()
+
+        if self.verbose:
+            print("Done.\n")
+            sys.stdout.flush()
+
+    def _build_models(self,dom_list):
+        if self.verbose:
+            print("Building %i HMM models..." % len(dom_list))
+            sys.stdout.flush()
+
+        mkdir(self.mod_fold)
+
+        for acc in dom_list:
+            cmd = "buildmodel %s/%s -train %s/%s.fa -randseed 0" % (self.mod_fold,acc,self.seeds_fold,acc)
+            sp.check_call(cmd,shell=True)
+
+        if self.verbose:
+            print("Done.\n")
+            sys.stdout.flush()
+
+    # def _compute_fisher_scores(self,dom_list):
+
+    #     def compute_fisher_scores(dom_fold,dom_list):
+
+
 
     def vectorize(self):
         # create a temporary hidden folder
-        temp_fold = "temp_" + str(uuid4())
-        mkdir(temp_fold)
+        mkdir(self.temp_fold)
 
-        # run pfam scan (if needed)
+        # pfam scan is not implemented yet
         if self.pfam_scan_ref is None or self.pfam_scan_sel is None:
-            raise NotImplementedError()
-
-        print("Determining domain list...", end=' ')
-        sys.stdout.flush()
-        # determine the accession numbers of the pfam domains
+            raise NotImplementedError("Run pfam_scan from: http://pfam.xfam.org/search#tabview=tab1")
+        # determine the accession numbers of the pfam domains needed for computing the features
         dom_list = self._overlapping_domains()
-        print("Done.\n")
-        sys.stdout.flush()
-
         #prepare fasta file with the sequence of the domains
-        dom_ref_fold = "%s/domains_ref" % temp_fold
-        mkdir(dom_ref_fold)
-        dom_sel_fold = "%s/domains_sel" % temp_fold
-        mkdir(dom_sel_fold)
-        print("Preparing fasta files for %i domains..." % len(dom_list), end=' ')
-        sys.stdout.flush()
-        self._prepare_domains(dom_list,dom_ref_fold,dom_sel_fold)
-        print("Done.\n")
-        sys.stdout.flush()
-
+        self._prepare_domains(dom_list)
         # download the alignment of the seeds from pfam and convert it to fasta
-        seeds_fold = "%s/seeds" % temp_fold
-        mkdir(seeds_fold)
-        print("Downloading %i domain seeds from http://pfam.xfam.org/..." % len(dom_list), end=' ')
-        sys.stdout.flush()
-        for acc in dom_list:
-            seed = pfam_interface.dowload_seed_seqs(acc)
-            if seed is not None:
-                nf = open("%s/seeds/%s.fa" % (temp_fold,acc),"w")
-                nf.write(seed)
-                nf.close()
-        print("Done.\n")
-        sys.stdout.flush()
-
+        self._download_seeds(dom_list)
         # compile the models using SAM 3.5
-        mod_fold = "%s/mod" % temp_fold
-        mkdir(mod_fold)
-        print("Building %i HMM models..." % len(dom_list))
-        sys.stdout.flush()
-        for i,acc in enumerate(dom_list):
-            cmd = "buildmodel %s/%s -train %s/%s.fa -randseed 0" % (mod_fold,acc,seeds_fold,acc)
-            sp.check_call(cmd,shell=True)
-        print("Done.\n")
-        sys.stdout.flush()
+        self._build_models(dom_list)
+
 
 
 v = RBPVectorizer(fasta_ref="../examples/rbps_HT.fa",
