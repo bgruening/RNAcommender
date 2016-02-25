@@ -4,9 +4,10 @@ import argparse
 import pandas as pd
 import sys
 import subprocess as sp
-from urllib2 import urlopen, URLError
 from uuid import uuid4
 from os import mkdir,rmdir
+
+import pfam_interface
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -15,10 +16,6 @@ __maintainer__ = "Gianluca Corrado"
 __email__ = "gianluca.corrado@unitn.it"
 __status__ = "Production"
 
-"""
-NOTES:
-* move all the methods that interact with Pfam in a pfam util file (easier to update when pfam changes)
-"""
 
 class RBPVectorizer():
     def __init__(self,fasta_ref,fasta_sel,pfam_scan_ref=None,pfam_scan_sel=None):
@@ -26,9 +23,6 @@ class RBPVectorizer():
         self.fasta_sel = fasta_sel
         self.pfam_scan_ref = pfam_scan_ref
         self.pfam_scan_sel = pfam_scan_sel
-
-    def pfam_scan(self):
-        raise NotImplementedError("Implement wrapper for pfam_scan.pl")
 
     def _overlapping_domains(self):
         cols = ["seq_id","alignment_start","alignment_end","envelope_start","envelope_end","hmm_acc","hmm_name","type","hmm_start","hmm_end","hmm_length","bit_score","E-value","significance","clan"]
@@ -49,50 +43,69 @@ class RBPVectorizer():
             doms = (group[group>1]).dropna().index
             return sorted(list(doms))
 
-    def _stockholm2fasta(self,stockholm):
-        fasta = ""
-        for line in stockholm.split("\n"):
-            # comment line
-            if line[0] == "#":
-                continue
-            # termination line
-            elif line == "//":
-                return fasta
-            # alignment line
-            else:
-                name,align = line.split()
-                seq = align.replace(".","")
-                fasta += ">%s\n%s\n" % (name,seq)
+    def _prepare_domains(self,dom_list,dom_ref_fold,dom_sel_fold):
 
-    def _dowload_seed_seqs(self,acc):
-        try:
-            url = "http://pfam.xfam.org/family/%s/alignment/seed" % acc
-            socket = urlopen(url)
-        except URLError:
-            raise URLError("Accession not recognized: %s (go to http://pfam.xfam.org/ for more details)." % acc)
-        else:
-            stockholm = socket.read()
-            socket.close()
-            fasta = self._stockholm2fasta(stockholm)
-            return fasta
+        def import_fasta(fasta_file):
+            dic = {}
+            f = open(fasta_file)
+            fasta = f.read()
+            f.close()
+            for a in fasta.split('>'):
+                k = a.split('\n')[0]
+                v = ''.join(a.split('\n')[1:])
+                dic[k] = v
+            return dic
+
+        def prepare_domains(fasta_dic,dom_list,pfam_scan,out_folder):
+            out_file_dic = {}
+            for acc in dom_list:
+                out_file_dic[acc] = open("%s/%s.fa" % (out_folder,acc), "w")
+
+            f = open(pfam_scan)
+            f.readline()
+            for line in f:
+                split = line.split()
+                rbp = split[0]
+                start = int(split[3])
+                stop = int(split[4])
+                acc = split[5].split('.')[0]
+                if acc in out_file_dic.keys():
+                    out_file_dic[acc].write(">%s:%i-%i\n%s\n" % (rbp,start,stop,fasta_dic[rbp][start:stop]))
+            f.close()
+
+            for acc in dom_list:
+                out_file_dic[acc].close()
+
+        fasta_ref = import_fasta(self.fasta_ref)
+        prepare_domains(fasta_ref,dom_list,self.pfam_scan_ref,dom_ref_fold)
+
+        fasta_sel = import_fasta(self.fasta_sel)
+        prepare_domains(fasta_sel,dom_list,self.pfam_scan_sel,dom_sel_fold)
 
     def vectorize(self):
         # create a temporary hidden folder
         temp_fold = "temp_" + str(uuid4())
         mkdir(temp_fold)
 
-        # if the file is not given as input run pfam scan
+        # run pfam scan (if needed)
         if self.pfam_scan_ref is None or self.pfam_scan_sel is None:
-            print("Scanning fasta files against the Pfam Database...", end=' ')
-            sys.stdout.flush()
-            self._pfam_scan() # raises NotImplementedError
-            print("Done.\n")
-            sys.stdout.flush()
+            raise NotImplementedError()
 
         print("Determining domain list...", end=' ')
         sys.stdout.flush()
         # determine the accession numbers of the pfam domains
         dom_list = self._overlapping_domains()
+        print("Done.\n")
+        sys.stdout.flush()
+
+        #prepare fasta file with the sequence of the domains
+        dom_ref_fold = "%s/domains_ref" % temp_fold
+        mkdir(dom_ref_fold)
+        dom_sel_fold = "%s/domains_sel" % temp_fold
+        mkdir(dom_sel_fold)
+        print("Preparing fasta files for %i domains..." % len(dom_list), end=' ')
+        sys.stdout.flush()
+        self._prepare_domains(dom_list,dom_ref_fold,dom_sel_fold)
         print("Done.\n")
         sys.stdout.flush()
 
@@ -102,7 +115,7 @@ class RBPVectorizer():
         print("Downloading %i domain seeds from http://pfam.xfam.org/..." % len(dom_list), end=' ')
         sys.stdout.flush()
         for acc in dom_list:
-            seed = self._dowload_seed_seqs(acc)
+            seed = pfam_interface.dowload_seed_seqs(acc)
             if seed is not None:
                 nf = open("%s/seeds/%s.fa" % (temp_fold,acc),"w")
                 nf.write(seed)
@@ -122,7 +135,7 @@ class RBPVectorizer():
         sys.stdout.flush()
 
 
-v = RBPVectorizer(fasta_ref="../examples/rbps.fa_HT",
+v = RBPVectorizer(fasta_ref="../examples/rbps_HT.fa",
     fasta_sel="../examples/rbps_HT.fa",
     pfam_scan_ref="../examples/pfam_scan_HT.txt",
     pfam_scan_sel="../examples/pfam_scan_HT.txt")
