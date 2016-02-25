@@ -25,11 +25,14 @@ class RBPVectorizer():
         self.pfam_scan_sel = pfam_scan_sel
         self.verbose = verbose
 
-        self.temp_fold = "temp_" + str(uuid.uuid4())
+        # self.temp_fold = "temp_" + str(uuid.uuid4())
+        self.temp_fold = "temp_38267b24-0c13-47cb-b66c-5e71184d52d9"
         self.dom_ref_fold = "%s/domains_ref" % self.temp_fold
         self.dom_sel_fold = "%s/domains_sel" % self.temp_fold
         self.seeds_fold = "%s/seeds" % self.temp_fold
         self.mod_fold = "%s/mod" % self.temp_fold
+        self.fisher_ref_fold = "%s/fisher_scores_ref" % self.temp_fold
+        self.fisher_sel_fold = "%s/fisher_scores_sel" % self.temp_fold
 
     def _overlapping_domains(self):
         if self.verbose:
@@ -90,7 +93,7 @@ class RBPVectorizer():
                 out_file_dic[acc].close()
 
         if self.verbose:
-            print("Preparing fasta files for %i domains..." % len(dom_list), end=' ')
+            print("Preparing fasta files with domain sequences...", end=' ')
             sys.stdout.flush()
 
         mkdir(self.dom_ref_fold)
@@ -107,7 +110,7 @@ class RBPVectorizer():
 
     def _download_seeds(self,dom_list):
         if self.verbose:
-            print("Downloading %i domain seeds from http://pfam.xfam.org/..." % len(dom_list), end=' ')
+            print("Downloading domain seeds from http://pfam.xfam.org/...", end=' ')
             sys.stdout.flush()
 
         mkdir(self.seeds_fold)
@@ -125,7 +128,7 @@ class RBPVectorizer():
 
     def _build_models(self,dom_list):
         if self.verbose:
-            print("Building %i HMM models..." % len(dom_list))
+            print("Building HMM models...")
             sys.stdout.flush()
 
         mkdir(self.mod_fold)
@@ -138,9 +141,29 @@ class RBPVectorizer():
             print("Done.\n")
             sys.stdout.flush()
 
-    # def _compute_fisher_scores(self,dom_list):
+    def _compute_fisher_scores(self,dom_list):
 
-    #     def compute_fisher_scores(dom_fold,dom_list):
+        def get_fisher_scores(dom_list,mod_fold,dom_fold,fisher_fold):
+            for acc in dom_list:
+                cmd = "get_fisher_scores run -i %s/%s.mod -db %s/%s.fa" % (mod_fold,acc,dom_fold,acc)
+                fisher = sp.check_output(cmd,shell=True)
+                nf = open("%s/%s.txt" % (fisher_fold,acc),"w")
+                nf.write(fisher)
+                nf.close()
+
+        if self.verbose:
+            print("Computing Fisher scores...")
+            sys.stdout.flush()
+
+        mkdir(self.fisher_ref_fold)
+        get_fisher_scores(dom_list,self.mod_fold,self.dom_ref_fold,self.fisher_ref_fold)
+
+        mkdir(self.fisher_sel_fold)
+        get_fisher_scores(dom_list,self.mod_fold,self.dom_sel_fold,self.fisher_sel_fold)
+
+        if self.verbose:
+            print("Done.\n")
+            sys.stdout.flush()
 
 
 
@@ -159,6 +182,8 @@ class RBPVectorizer():
         self._download_seeds(dom_list)
         # compile the models using SAM 3.5
         self._build_models(dom_list)
+        # compute fisher scores using SAM 3.5
+        self._compute_fisher_scores(dom_list)
 
 
 
