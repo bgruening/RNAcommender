@@ -10,6 +10,7 @@ import re
 from os import mkdir,rmdir
 
 import pfam_utils
+import fasta_utils
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -20,23 +21,89 @@ __status__ = "Production"
 
 
 class RBPVectorizer():
-    def __init__(self,fasta_ref,fasta_sel,output,pfam_scan_ref=None,pfam_scan_sel=None,include_all_sel=False,verbose=True):
+    def __init__(self,fasta_ref,fasta_sel,output,include_all_sel=False,verbose=True):
         self.fasta_ref = fasta_ref
         self.fasta_sel = fasta_sel
         self.output = output
-        self.pfam_scan_ref = pfam_scan_ref
-        self.pfam_scan_sel = pfam_scan_sel
+        self.pfam_scan_ref = None
+        self.pfam_scan_sel = None
         self.include_all_sel = include_all_sel
         self.verbose = verbose
 
-        # self.temp_fold = "temp_" + str(uuid.uuid4())
-        self._temp_fold = "temp_38267b24-0c13-47cb-b66c-5e71184d52d9"
+        self._temp_fold = "temp_" + str(uuid.uuid4())
         self._dom_ref_fold = "%s/domains_ref" % self._temp_fold
         self._dom_sel_fold = "%s/domains_sel" % self._temp_fold
         self._seeds_fold = "%s/seeds" % self._temp_fold
         self._mod_fold = "%s/mod" % self._temp_fold
         self._fisher_ref_fold = "%s/fisher_scores_ref" % self._temp_fold
         self._fisher_sel_fold = "%s/fisher_scores_sel" % self._temp_fold
+
+    def _pfam_scan(self):
+        if self.verbose:
+            print("Scanning RBP sequences against Pfam...")
+            sys.stdout.flush()
+
+        if self.fasta_ref != self.fasta_sel:
+            self.pfam_scan_ref = "%s/pfam_scan_ref.txt" % self._temp_fold
+            self.pfam_scan_sel = "%s/pfam_scan_sel.txt" % self._temp_fold
+            nf_ref = open(self.pfam_scan_ref, "w")
+            nf_ref.write(pfam_utils.search_header())
+            nf_sel = open(self.pfam_scan_sel, "w")
+            nf_sel.write(pfam_utils.search_header())
+
+            fasta_ref = fasta_utils.import_fasta(self.fasta_ref)
+            fasta_sel = fasta_utils.import_fasta(self.fasta_sel)
+
+            to_scan = sorted(set(fasta_ref.keys() + fasta_sel.keys()))
+            for rbp in to_scan:
+                if self.verbose:
+                    print(rbp)
+                    sys.stdout.flush()
+
+                if rbp in fasta_ref.keys() and rbp in fasta_sel.keys():
+                    try:
+                        assert fasta_ref[rbp] == fasta_sel[rbp]
+                    except AssertionError:
+                        print('%s: sequence mismatch between ref and sel')
+                    seq = fasta_ref[rbp]
+                    text = pfam_utils.sequence_search(rbp,seq)
+                    nf_ref.write(text)
+                    nf_sel.write(text)
+                elif rbp in fasta_ref.keys():
+                    seq = fasta_ref[rbp]
+                    text = pfam_utils.sequence_search(rbp,seq)
+                    nf_ref.write(text)
+                else:
+                    seq = fasta_sel[rbp]
+                    text = pfam_utils.sequence_search(rbp,seq)
+                    nf_sel.write(text)
+
+            nf_ref.close()
+            nf_sel.close()
+        else:
+            pfam_scan_file = "%s/pfam_scan.txt" % self._temp_fold
+            self.pfam_scan_ref = pfam_scan_file
+            self.pfam_scan_sel = pfam_scan_file
+
+            nf = open(pfam_scan_file, "w")
+            nf.write(pfam_utils.search_header())
+
+            fasta = fasta_utils.import_fasta(self.fasta_ref)
+
+            for rbp in sorted(fasta.keys()):
+                if self.verbose:
+                    print(rbp, end=', ')
+                    sys.stdout.flush()
+                seq = fasta[rbp]
+                text = pfam_utils.sequence_search(rbp,seq)
+                nf.write(text)
+
+            nf.close()
+
+
+        if self.verbose:
+                print("Done.\n")
+                sys.stdout.flush()
 
     def _overlapping_domains(self):
         if self.verbose:
@@ -45,9 +112,9 @@ class RBPVectorizer():
 
         if self.pfam_scan_ref != self.pfam_scan_sel:
             data_ref = pfam_utils.read_pfam_output(self.pfam_scan_ref)
-            dom_ref = set(a.split('.')[0] for a in data_ref["hmm_acc"])
+            doms_ref = set(a.split('.')[0] for a in data_ref["hmm_acc"])
             data_sel = pfam_utils.read_pfam_output(self.pfam_scan_sel)
-            dom_sel = set(a.split('.')[0] for a in data_sel["hmm_acc"])
+            doms_sel = set(a.split('.')[0] for a in data_sel["hmm_acc"])
             dom_list = sorted(list(doms_ref & doms_sel))
         else:
             data = pfam_utils.read_pfam_output(self.pfam_scan_ref)
@@ -64,17 +131,6 @@ class RBPVectorizer():
         return dom_list
 
     def _prepare_domains(self,dom_list):
-
-        def import_fasta(fasta_file):
-            dic = {}
-            f = open(fasta_file)
-            fasta = f.read()
-            f.close()
-            for a in fasta.split('>'):
-                k = a.split('\n')[0]
-                v = ''.join(a.split('\n')[1:])
-                dic[k] = v
-            return dic
 
         def prepare_domains(fasta_dic,dom_list,pfam_scan,out_folder):
             out_file_dic = {}
@@ -101,11 +157,11 @@ class RBPVectorizer():
             sys.stdout.flush()
 
         mkdir(self._dom_ref_fold)
-        fasta_ref = import_fasta(self.fasta_ref)
+        fasta_ref = fasta_utils.import_fasta(self.fasta_ref)
         prepare_domains(fasta_ref,dom_list,self.pfam_scan_ref,self._dom_ref_fold)
 
         mkdir(self._dom_sel_fold)
-        fasta_sel = import_fasta(self.fasta_sel)
+        fasta_sel = fasta_utils.import_fasta(self.fasta_sel)
         prepare_domains(fasta_sel,dom_list,self.pfam_scan_sel,self._dom_sel_fold)
 
         if self.verbose:
@@ -266,14 +322,10 @@ class RBPVectorizer():
     def vectorize(self):
         # create a temporary hidden folder
         mkdir(self._temp_fold)
-
-        # pfam scan is not implemented yet
-        if self.pfam_scan_ref is None or self.pfam_scan_sel is None:
-            raise NotImplementedError("Run pfam_scan from: http://pfam.xfam.org/search#tabview=tab1")
-
+        # scan the RBP sequences against Pfam
+        self._pfam_scan()
         # determine the accession numbers of the pfam domains needed for computing the features
         dom_list = self._overlapping_domains()
-
         #prepare fasta file with the sequence of the domains
         self._prepare_domains(dom_list)
         # download the alignment of the seeds from pfam and convert it to fasta
@@ -282,16 +334,14 @@ class RBPVectorizer():
         self._build_models(dom_list)
         # compute fisher scores using SAM 3.5
         self._compute_fisher_scores(dom_list)
-        compute the empirical kernel map
-        return self._ekm(dom_list)
-
-
+        #compute the empirical kernel map
+        self._ekm(dom_list)
+        # create a temporary hidden folder
+        rmdir(self._temp_fold)
 
 v = RBPVectorizer(fasta_ref="../examples/rbps_HT.fa",
     fasta_sel="../examples/rbps_HT.fa",
-    pfam_scan_ref="../examples/pfam_scan_HT.txt",
-    pfam_scan_sel="../examples/pfam_scan_HT.txt",
     include_all_sel=True,
     output="prova.h5")
-a = v.vectorize()
+ret = v.vectorize()
 
