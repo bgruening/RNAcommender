@@ -1,9 +1,13 @@
 import pandas as pd
 from urllib import urlencode
-from urllib2 import urlopen, URLError, Request
+from urllib2 import Request, urlopen, URLError
+from httplib import HTTPException
 import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import ParseError
 from math import ceil
 from time import sleep
+
+import fasta_utils
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -12,7 +16,10 @@ __maintainer__ = "Gianluca Corrado"
 __email__ = "gianluca.corrado@unitn.it"
 __status__ = "Production"
 
-def sequence_search(seq_id,seq,header=False):
+def search_header():
+    return "<seq id>        <alignment start>       <alignment end> <envelope start>        <envelope end>  <hmm acc>       <hmm name>      <type>  <hmm start>     <hmm end>       <hmm length>    <bit score>     <E-value>       <significance>  <clan>\n"
+
+def sequence_search(seq_id,seq):
 
     def add_spaces(text,mul=8):
         l = len(text)
@@ -28,22 +35,23 @@ def sequence_search(seq_id,seq,header=False):
             'output' : 'xml' }
     data = urlencode(params)
     req = Request(url, data)
+    # give some time to Pfam to elaborate the request
+    sleep(0.5)
+    while urlopen(req).getcode() != 200:
+        sleep(0.5)
     response = urlopen(req)
     xml = response.read()
-    response.close()
     root = ET.fromstring(xml)
     result_url = root[0][1].text
+    # wait for Pfam to compute the results
+    sleep(4)
     while urlopen(result_url).getcode() != 200:
         sleep(1)
     socket = urlopen(result_url)
     result_xml = socket.read()
-    socket.close()
     root = ET.fromstring(result_xml)
     matches = root[0][0][0][0][:]
-    if header:
-        ret = "<seq id>        <alignment start>       <alignment end> <envelope start>        <envelope end>  <hmm acc>       <hmm name>      <type>  <hmm start>     <hmm end>       <hmm length>    <bit score>     <E-value>       <significance>  <clan>\n"
-    else:
-        ret = ""
+    ret = ""
     for match in matches:
         for location in match:
             ret += add_spaces(seq_id)
@@ -70,22 +78,6 @@ def read_pfam_output(pfam_out_file):
     return data
 
 def download_seed_seqs(acc):
-
-    def stockholm2fasta(stockholm):
-        fasta = ""
-        for line in stockholm.split("\n"):
-            # comment line
-            if line[0] == "#":
-                continue
-            # termination line
-            elif line == "//":
-                return fasta
-            # alignment line
-            else:
-                name,align = line.split()
-                seq = align.replace(".","")
-                fasta += ">%s\n%s\n" % (name,seq)
-
     try:
         url = "http://pfam.xfam.org/family/%s/alignment/seed" % acc
         socket = urlopen(url)
@@ -94,5 +86,5 @@ def download_seed_seqs(acc):
     else:
         stockholm = socket.read()
         socket.close()
-        fasta = stockholm2fasta(stockholm)
+        fasta = fasta_utils.stockholm2fasta(stockholm)
         return fasta
