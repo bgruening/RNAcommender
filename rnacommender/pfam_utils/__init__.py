@@ -1,7 +1,9 @@
 import pandas as pd
-from urllib2 import urlopen, URLError
+from urllib import urlencode
+from urllib2 import urlopen, URLError, Request
 import xml.etree.ElementTree as ET
 from math import ceil
+from time import sleep
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -20,7 +22,19 @@ def sequence_search(seq_id,seq,header=False):
             offset = 8
         return text + " "*offset
 
-    result_url = "http://pfam.xfam.org/search/sequence/resultset/D6C37D2C-DBD5-11E5-8641-F81495374F7B?output=xml"
+    url = "http://pfam.xfam.org/search/sequence"
+    params = {'seq' : seq,
+            'evalue' : '1.0',
+            'output' : 'xml' }
+    data = urlencode(params)
+    req = Request(url, data)
+    response = urlopen(req)
+    xml = response.read()
+    response.close()
+    root = ET.fromstring(xml)
+    result_url = root[0][1].text
+    while urlopen(result_url).getcode() != 200:
+        sleep(1)
     socket = urlopen(result_url)
     result_xml = socket.read()
     socket.close()
