@@ -1,7 +1,5 @@
 import pandas as pd
-from urllib import urlencode
-from urllib2 import Request, urlopen, URLError
-from httplib import HTTPException
+import requests
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import ParseError
 from math import ceil
@@ -33,23 +31,33 @@ def sequence_search(seq_id,seq):
     params = {'seq' : seq,
             'evalue' : '1.0',
             'output' : 'xml' }
-    data = urlencode(params)
-    req = Request(url, data)
-    # give some time to Pfam to elaborate the request
-    sleep(0.5)
-    while urlopen(req).getcode() != 200:
-        sleep(0.5)
-    response = urlopen(req)
-    xml = response.read()
-    root = ET.fromstring(xml)
+    req = requests.get(url,params=params)
+    xml = req.text
+    try:
+        root = ET.fromstring(xml)
+    except ParseError:
+        f = open("log_xml","w")
+        f.write(xml)
+        f.close()
+        raise ParseError()
     result_url = root[0][1].text
     # wait for Pfam to compute the results
     sleep(4)
-    while urlopen(result_url).getcode() != 200:
-        sleep(1)
-    socket = urlopen(result_url)
-    result_xml = socket.read()
-    root = ET.fromstring(result_xml)
+    while True:
+        req2 = requests.get(result_url)
+        if req2.status_code == 200:
+            break
+        else:
+            sleep(1)
+    result_xml = req2.text
+    try:
+        root = ET.fromstring(result_xml)
+    except ParseError:
+        f = open("log_result_xml","w")
+        f.write(xml)
+        f.close()
+        raise ParseError()
+
     matches = root[0][0][0][0][:]
     ret = ""
     for match in matches:
@@ -78,13 +86,8 @@ def read_pfam_output(pfam_out_file):
     return data
 
 def download_seed_seqs(acc):
-    try:
-        url = "http://pfam.xfam.org/family/%s/alignment/seed" % acc
-        socket = urlopen(url)
-    except URLError:
-        raise URLError("Accession not recognized: %s (go to http://pfam.xfam.org/ for more details)." % acc)
-    else:
-        stockholm = socket.read()
-        socket.close()
-        fasta = fasta_utils.stockholm2fasta(stockholm)
-        return fasta
+    url = "http://pfam.xfam.org/family/%s/alignment/seed" % acc
+    req = requests.get(url)
+    stockholm = req.text
+    fasta = fasta_utils.stockholm2fasta(stockholm)
+    return fasta
