@@ -7,7 +7,8 @@ import sys
 import subprocess as sp
 import uuid
 import re
-from os import mkdir,rmdir
+from os import mkdir
+from shutil import rmtree
 
 import pfam_utils
 import fasta_utils
@@ -57,7 +58,7 @@ class RBPVectorizer():
             to_scan = sorted(set(fasta_ref.keys() + fasta_sel.keys()))
             for rbp in to_scan:
                 if self.verbose:
-                    print(rbp)
+                    print(rbp, end=', ')
                     sys.stdout.flush()
 
                 if rbp in fasta_ref.keys() and rbp in fasta_sel.keys():
@@ -337,7 +338,7 @@ class RBPVectorizer():
         #compute the empirical kernel map
         self._ekm(dom_list)
         # create a temporary hidden folder
-        rmdir(self._temp_fold)
+        rmtree(self._temp_fold)
 
 v = RBPVectorizer(fasta_ref="../examples/rbps_HT.fa",
     fasta_sel="../examples/rbps_HT.fa",
