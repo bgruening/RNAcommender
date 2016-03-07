@@ -346,3 +346,25 @@ v = RBPVectorizer(fasta_ref="../examples/rbps_HT.fa",
     output="prova.h5")
 ret = v.vectorize()
 
+def getparser():
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('fasta_ref', metavar='fasta_ref', type=str,
+                        help="""Fasta file containing the reference RBP sequences.""")
+    parser.add_argument('fasta_sel', metavar='fasta_sel', type=str,
+                        help="""Fasta file containing the selected RBP sequences.""")
+    parser.add_argument('output', metavar='output', type=str,
+                        help="""File name of the HDF Store containing the RBP features.""")
+    parser.add_argument('--all-sel', dest='all_sel', action='store_true', default=False,
+                        help="""Return one vector for each selected RBP (even if the similarity is null with all the reference RBPs).""")
+    return parser
+
+if __name__ == '__main__':
+    parser = getparser()
+    args = parser.parse_args()
+    main(args)
+    v = RBPVectorizer(fasta_ref=args.fasta_ref,
+                    fasta_sel=args.fasta_sel,
+                    include_all_sel=args.all_sel,
+                    include_all_sel=args.all_sel)
+    v.vectorize()
