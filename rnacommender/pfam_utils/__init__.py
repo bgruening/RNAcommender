@@ -15,11 +15,30 @@ __email__ = "gianluca.corrado@unitn.it"
 __status__ = "Production"
 
 def search_header():
+    """Return the header of a Pfam scan search"""
     return "<seq id>        <alignment start>       <alignment end> <envelope start>        <envelope end>  <hmm acc>       <hmm name>      <type>  <hmm start>     <hmm end>       <hmm length>    <bit score>     <E-value>       <significance>  <clan>\n"
 
 def sequence_search(seq_id,seq):
+    """
+    Input
+    -----
+    seq_id : str
+        Name of the protein sequence.
+    seq : str
+        Protein sequence.
+
+    Output
+    ------
+    ret : str
+        Formatted string containing the results of the Pfam scan for the
+        given sequence
+    """
 
     def add_spaces(text,mul=8):
+        """
+        Add spaces to a string. The resulting string will be of length
+        multiple of mul.
+        """
         l = len(text)
         next_mul = int(ceil(l / mul)+1) * mul
         offset = next_mul - l
@@ -35,11 +54,11 @@ def sequence_search(seq_id,seq):
     xml = req.text
     try:
         root = ET.fromstring(xml)
+    # sometimes Pfam returns the HTML code
     except ParseError:
-        f = open("log_xml","w")
-        f.write(xml)
-        f.close()
-        raise ParseError()
+        print "resending: %s" % seq_id
+        return "%s" % sequence_search(seq_id,seq)
+
     result_url = root[0][1].text
     # wait for Pfam to compute the results
     sleep(4)
@@ -50,15 +69,12 @@ def sequence_search(seq_id,seq):
         else:
             sleep(1)
     result_xml = req2.text
+    root = ET.fromstring(result_xml)
     try:
-        root = ET.fromstring(result_xml)
-    except ParseError:
-        f = open("log_result_xml","w")
-        f.write(xml)
-        f.close()
-        raise ParseError()
-
-    matches = root[0][0][0][0][:]
+        matches = root[0][0][0][0][:]
+    # Sometimes raised when the sequence has no matches
+    except IndexError:
+        return ""
     ret = ""
     for match in matches:
         for location in match:
@@ -79,13 +95,19 @@ def sequence_search(seq_id,seq):
             ret += "None\n"
     return ret
 
-def read_pfam_output(pfam_out_file):
-    cols = ["seq_id","alignment_start","alignment_end","envelope_start","envelope_end","hmm_acc","hmm_name","type","hmm_start","hmm_end","hmm_length","bit_score","E-value","significance","clan"]
-    data = pd.read_table(pfam_out_file,
-            sep="\s*",skip_blank_lines=True,skiprows=1,names=cols,engine='python')
-    return data
-
 def download_seed_seqs(acc):
+    """
+    Input
+    -----
+    acc : str
+        Accession number of a Pfam domain
+
+    Output
+    ------
+    fasta : str
+        Seed sequences in fasta format
+    """
+
     url = "http://pfam.xfam.org/family/%s/alignment/seed" % acc
     req = requests.get(url)
     stockholm = req.text

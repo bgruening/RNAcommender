@@ -1,5 +1,6 @@
-from __future__ import print_function
+#!/usr/bin/env python
 
+from __future__ import print_function
 import argparse
 import numpy as np
 import pandas as pd
@@ -22,7 +23,33 @@ __status__ = "Production"
 
 
 class RBPVectorizer():
+    """Computes the RBP features"""
     def __init__(self,fasta_ref,fasta_sel,output,include_all_sel=False,verbose=True):
+        """
+        Parameters
+        ----------
+        fasta_ref : str
+            Fasta file containing the reference sequences. The similarity will computed
+            against the reference sequences.
+
+        fasta_sel : str
+            Fasta file containing the selected sequences. The similarity will computed
+            for the selected sequences. (This might be the same file as fasta_ref).
+
+        output : str
+            Name of the output file. The output file is an HDF Store containin a
+            pandas DataFrame, where the columns are the selected sequence names and the rows
+            are the reference sequence names
+
+        include_all_sel : bool (default: False)
+            Includes all the selected sequences even when they have zero similarity with all the
+            reference sequences. If a sequence is both in the reference and selected set, and it
+            has zero similarity with all the reference proteins except itself it will included only if
+            this flag is set.
+
+        verbose : bool (default : True)
+            Print information to STDOUT
+        """
         self.fasta_ref = fasta_ref
         self.fasta_sel = fasta_sel
         self.output = output
@@ -40,6 +67,7 @@ class RBPVectorizer():
         self._fisher_sel_fold = "%s/fisher_scores_sel" % self._temp_fold
 
     def _pfam_scan(self):
+        """Scan the sequences in fasta_ref and fasta_sel against the Pfam database"""
         if self.verbose:
             print("Scanning RBP sequences against Pfam...")
             sys.stdout.flush()
@@ -107,6 +135,7 @@ class RBPVectorizer():
                 sys.stdout.flush()
 
     def _overlapping_domains(self):
+        """Compute the set of overlapping domains between the proteins in fasta_ref and fasta_sel"""
         if self.verbose:
             print("Determining domain list...", end=' ')
             sys.stdout.flush()
@@ -132,6 +161,7 @@ class RBPVectorizer():
         return dom_list
 
     def _prepare_domains(self,dom_list):
+        """Select domain sequences from the entire protein sequences"""
 
         def prepare_domains(fasta_dic,dom_list,pfam_scan,out_folder):
             out_file_dic = {}
@@ -170,6 +200,7 @@ class RBPVectorizer():
             sys.stdout.flush()
 
     def _download_seeds(self,dom_list):
+        """Download seed sequences for the needed domains"""
         if self.verbose:
             print("Downloading domain seeds from http://pfam.xfam.org/...", end=' ')
             sys.stdout.flush()
@@ -188,6 +219,7 @@ class RBPVectorizer():
             sys.stdout.flush()
 
     def _build_models(self,dom_list):
+        """Wrapper for SAM 3.5 buildmodel"""
         if self.verbose:
             print("Building HMM models...")
             sys.stdout.flush()
@@ -203,7 +235,7 @@ class RBPVectorizer():
             sys.stdout.flush()
 
     def _compute_fisher_scores(self,dom_list):
-
+        """Wrapper for SAM 3.5 get_fisher_scores"""
         def get_fisher_scores(dom_list,mod_fold,dom_fold,fisher_fold):
             for acc in dom_list:
                 cmd = "get_fisher_scores run -i %s/%s.mod -db %s/%s.fa" % (mod_fold,acc,dom_fold,acc)
@@ -227,14 +259,16 @@ class RBPVectorizer():
             sys.stdout.flush()
 
     def _ekm(self,dom_list):
-
+        """Compute the empirical kernel map from the Fisher scores"""
         def process_seg(e):
+            """Process one segment of a SAM 3.5 get_fisher_scores output file"""
             seg = e.split()
             c = seg[0].split(':')[0]
             m = map(float,seg[3:])
             return c,m
 
         def read_sam_file(samfile):
+            """Read a SAM 3.5 get_fisher_scores output file"""
             f = open(samfile)
             data = f.read()
             f.close()
@@ -252,6 +286,7 @@ class RBPVectorizer():
             return df
 
         def dom_features(fisher_fold,dom_list,names=None):
+            """Compute the features with respect to a domain type"""
             dfs = []
             for acc in dom_list:
                 df = read_sam_file("%s/%s.txt" % (fisher_fold,acc))
@@ -272,6 +307,7 @@ class RBPVectorizer():
             return con
 
         def seq_names(fasta_file):
+            """Get sequence names from fasta file"""
             names = []
             f = open(fasta_file)
             fasta = f.read()
@@ -321,6 +357,7 @@ class RBPVectorizer():
             sys.stdout.flush()
 
     def vectorize(self):
+        """Produce the RBP features"""
         # create a temporary hidden folder
         mkdir(self._temp_fold)
         # scan the RBP sequences against Pfam
@@ -340,13 +377,8 @@ class RBPVectorizer():
         # create a temporary hidden folder
         rmtree(self._temp_fold)
 
-v = RBPVectorizer(fasta_ref="../examples/rbps_HT.fa",
-    fasta_sel="../examples/rbps_HT.fa",
-    include_all_sel=True,
-    output="prova.h5")
-ret = v.vectorize()
 
-def getparser():
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('fasta_ref', metavar='fasta_ref', type=str,
@@ -357,14 +389,14 @@ def getparser():
                         help="""File name of the HDF Store containing the RBP features.""")
     parser.add_argument('--all-sel', dest='all_sel', action='store_true', default=False,
                         help="""Return one vector for each selected RBP (even if the similarity is null with all the reference RBPs).""")
-    return parser
+    parser.add_argument('--quiet', dest='quiet', action='store_true', default=False,
+                        help="""Do not print information at STDOUT""")
 
-if __name__ == '__main__':
-    parser = getparser()
     args = parser.parse_args()
-    main(args)
+
     v = RBPVectorizer(fasta_ref=args.fasta_ref,
                     fasta_sel=args.fasta_sel,
                     include_all_sel=args.all_sel,
-                    include_all_sel=args.all_sel)
+                    output=args.output,
+                    verbose=(not args.quiet))
     v.vectorize()
