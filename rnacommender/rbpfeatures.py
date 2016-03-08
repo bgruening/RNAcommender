@@ -20,7 +20,6 @@ __license__ = "MIT"
 __maintainer__ = "Gianluca Corrado"
 __email__ = "gianluca.corrado@unitn.it"
 __status__ = "Production"
-__doc___ = "RNA binding protein vectorizer for RNAcommender"
 
 class RBPVectorizer():
     """Computes the RBP features"""
@@ -29,26 +28,26 @@ class RBPVectorizer():
         Parameters
         ----------
         fasta_ref : str
-            Fasta file containing the reference sequences. The similarity will computed
+            Fasta file containing the reference sequences. The similarity will be computed
             against the reference sequences.
 
         fasta_sel : str
-            Fasta file containing the selected sequences. The similarity will computed
+            Fasta file containing the selected sequences. The similarity will be computed
             for the selected sequences. (This might be the same file as fasta_ref).
 
         output : str
-            Name of the output file. The output file is an HDF Store containin a
-            pandas DataFrame, where the columns are the selected sequence names and the rows
-            are the reference sequence names
+            Name of the output file. The output file is an HDF5 containing a
+            pandas DataFrame, in which the columns are the selected sequence names and the rows
+            are the reference sequence names.
 
         include_all_sel : bool (default: False)
             Includes all the selected sequences even when they have zero similarity with all the
-            reference sequences. If a sequence is both in the reference and selected set, and it
+            reference sequences. If a sequence is both in the reference and selected sets, and it
             has zero similarity with all the reference proteins except itself it will included only if
             this flag is set.
 
         verbose : bool (default : True)
-            Print information to STDOUT
+            Print information to STDOUT.
         """
         self.fasta_ref = fasta_ref
         self.fasta_sel = fasta_sel
@@ -67,7 +66,7 @@ class RBPVectorizer():
         self._fisher_sel_fold = "%s/fisher_scores_sel" % self._temp_fold
 
     def _pfam_scan(self):
-        """Scan the sequences in fasta_ref and fasta_sel against the Pfam database"""
+        """Scan the sequences against the Pfam database"""
         if self.verbose:
             print("Scanning RBP sequences against Pfam...")
             sys.stdout.flush()
@@ -135,7 +134,7 @@ class RBPVectorizer():
                 sys.stdout.flush()
 
     def _overlapping_domains(self):
-        """Compute the set of overlapping domains between the proteins in fasta_ref and fasta_sel"""
+        """Compute the set of domains contributing to the similarity"""
         if self.verbose:
             print("Determining domain list...", end=' ')
             sys.stdout.flush()
@@ -161,7 +160,7 @@ class RBPVectorizer():
         return dom_list
 
     def _prepare_domains(self,dom_list):
-        """Select domain sequences from the entire protein sequences"""
+        """Select domain subsequences from the entire protein sequences"""
 
         def prepare_domains(fasta_dic,dom_list,pfam_scan,out_folder):
             out_file_dic = {}
@@ -376,7 +375,6 @@ class RBPVectorizer():
         self._ekm(dom_list)
         # create a temporary hidden folder
         rmtree(self._temp_fold)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__,
