@@ -20,7 +20,7 @@ __license__ = "MIT"
 __maintainer__ = "Gianluca Corrado"
 __email__ = "gianluca.corrado@unitn.it"
 __status__ = "Production"
-
+__doc___ = "RNA binding protein vectorizer for RNAcommender"
 
 class RBPVectorizer():
     """Computes the RBP features"""
