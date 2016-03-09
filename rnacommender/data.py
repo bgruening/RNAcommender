@@ -12,17 +12,17 @@ __email__ = "gianluca.corrado@unitn.it"
 __status__ = "Production"
 
 class TrainDataset():
-    def __init__(self,fp,fr,Y,
+    def __init__(self,Fp,Fr,Y,
         standardize_proteins=False,standardize_rnas=False,
-        verbose=False, seed=1234):
+        verbose=True, seed=1234):
         """
         Parameters
         ----------
-        fp : str
-            The name of the HDF5 file containing features of the proteins.
+        Fp : str
+            The name of the HDF5 file containing features for the proteins.
 
-        fr : str
-            The name of the HDF5 file containing features of the RNAs.
+        Fr : str
+            The name of the HDF5 file containing features for the RNAs.
 
         Y : str
             The name of the HDF5 file containing the interaction matrix.
@@ -35,12 +35,15 @@ class TrainDataset():
         standardize_rnas : bool (default : False)
             Whether RNAs features should be standardized.
 
-        verbose : bool (default : False)
-            RNG seed contolling selection of subsets.
+        verbose : bool (default : True)
+            Print information at STDOUT.
 
         seed : int (default : 1234)
             Seed for random number generator.
         """
+
+        self.verbose = verbose
+        self.seed = seed
 
         def standardize(X):
             Xmean = X.mean(axis=1)
@@ -55,42 +58,39 @@ class TrainDataset():
             print('Interaction matrix of shape', self.Y.shape)
             sys.stdout.flush()
 
-        store = pd.io.pytables.HDFStore(fp)
-        self.fp = store.features.astype(config.floatX)
+        store = pd.io.pytables.HDFStore(Fp)
+        self.Fp = store.features.astype(config.floatX)
         store.close()
         if self.verbose:
-            print('Protein features of shape', self.fp.shape)
+            print('Protein features of shape', self.Fp.shape)
             sys.stdout.flush()
 
         if standardize_proteins:
             if self.verbose:
                 print('Standardizing protein features...', end = ' ')
                 sys.stdout.flush()
-            self.fp = standardize(self.fp)
+            self.Fp = standardize(self.Fp)
             if self.verbose:
-                print('Done')
+                print('Done.')
                 sys.stdout.flush()
 
-        store = pd.io.pytables.HDFStore(fr)
-        self.fr = store.features.astype(config.floatX)
+        store = pd.io.pytables.HDFStore(Fr)
+        self.Fr = store.features.astype(config.floatX)
         store.close()
         if self.verbose:
-            print('RNA features of shape', self.fp.shape)
+            print('RNA features of shape', self.Fp.shape)
             sys.stdout.flush()
 
         if standardize_rnas:
             if self.verbose:
                 print('Standardizing RNA features...', end = ' ')
                 sys.stdout.flush()
-            self.fr = standardize(self.fr)
+            self.Fr = standardize(self.Fr)
             if self.verbose:
-                print('Done')
+                print('.Done.')
                 sys.stdout.flush()
 
-        assert self.fp.shape[1] == self.Y.shape[1] and self.fp.shape[1] == self.Y.shape[0]
-
-        self.verbose = verbose
-        self.seed = seed
+        assert self.Fp.shape[1] == self.Y.shape[1] and self.Fr.shape[1] == self.Y.shape[0]
 
     def load(self):
         """
@@ -101,8 +101,8 @@ class TrainDataset():
             Each batch is made of all the labeled examples of one RNA.
         """
 
-        protein_input_dim = self.fp.shape[0]
-        rna_input_dim = self.fr.shape[0]
+        protein_input_dim = self.Fp.shape[0]
+        rna_input_dim = self.Fr.shape[0]
         dataset = []
 
         num_pos = 0
@@ -113,12 +113,14 @@ class TrainDataset():
             sys.stdout.flush()
         progress = 0
         for (i,rna) in enumerate(self.Y.index):
+            if i == 100: #debug
+                break   #debug
             if i % (len(self.Y.index)/10) == 0:
                 if self.verbose:
                     print(str(progress) + "%",end=' ')
                     sys.stdout.flush()
                 progress += 10
-            num_examples = Y.loc[rna].count().sum()  # understands NaN
+            num_examples = self.Y.loc[rna].count().sum()  # understands NaN
             P = np.zeros((num_examples,protein_input_dim)).astype(config.floatX)
             R = np.zeros((num_examples,rna_input_dim)).astype(config.floatX)
             I = np.zeros((num_examples,1)).astype(config.floatX)
@@ -127,8 +129,8 @@ class TrainDataset():
             for protein in self.Y.columns:
                 if np.isnan(self.Y[protein][rna]):
                     continue
-                L[index] = self.fp[protein]
-                R[index] = self.fr[rna]
+                P[index] = self.Fp[protein]
+                R[index] = self.Fr[rna]
                 I[index] = self.Y[protein][rna]
                 if I[index] > 0:
                     num_pos += 1
