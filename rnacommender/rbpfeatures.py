@@ -378,7 +378,7 @@ if __name__ == '__main__':
     parser.add_argument('--all-sel', dest='all_sel', action='store_true', default=False,
                         help="""Return one vector for each selected RBP (even if the similarity is null with all the reference RBPs).""")
     parser.add_argument('--quiet', dest='quiet', action='store_true', default=False,
-                        help="""Do not print information at STDOUT""")
+                        help="""Do not print information at STDOUT.""")
 
     args = parser.parse_args()
 
