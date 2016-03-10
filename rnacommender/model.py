@@ -2,7 +2,6 @@ from __future__ import print_function
 import numpy as np
 from theano import function, shared, config
 import theano.tensor as T
-# from lasagne.updates import sgd
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -96,7 +95,6 @@ class Model():
                     (self.Ar, self.Ar - learning_rate*g_Ar),
                     (self.br, self.br - learning_rate*g_br),
                     (self.B, self.B - learning_rate*g_B))
-        # updates = sgd(cost, [self.ap,self.bp,self.ar,self.br,self.B],learning_rate=learning_rate)
 
         # training step
         self.train = function(
