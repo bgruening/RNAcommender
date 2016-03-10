@@ -113,8 +113,6 @@ class TrainDataset():
             sys.stdout.flush()
         progress = 0
         for (i,rna) in enumerate(self.Y.index):
-            if i == 100: #debug
-                break   #debug
             if i % (len(self.Y.index)/10) == 0:
                 if self.verbose:
                     print(str(progress) + "%",end=' ')
