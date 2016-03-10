@@ -38,3 +38,22 @@ class InteractionMatrix():
         else:
             self.low_throughput_rbps = []
         self.verbose = verbose
+
+    def prepare(self):
+        #read interaction list
+        data = pd.read_table(self.interaction_list,sep='\t',comment='#',header=None)
+        # determine the names of the RBPs and the RNAs
+        rbps = data[0].unique()
+        rnas = data[1].unique()
+        # Define the DataFrame with all the intarction at 0
+        n = rbps.shape[0]
+        m = rnas.shape[0]
+        df = pd.DataFrame(np.zeros((m,n)),columns=rbps,index=rnas)
+        # Set NaN the interactions for the low-throughput RBPs
+        for rbp in self.low_throughput_rbps:
+            df[rbp][:] = np.nan
+
+        # check df.iterrows()
+
+i = InteractionMatrix(interaction_list="../examples/interactions_small.txt")
+a = i.prepare()
