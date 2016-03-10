@@ -72,7 +72,7 @@ class RNAVectorizer():
     def _fold_sequences(self):
         """ Fold the RNA sequences using RNAplfold"""
         if self.verbose:
-            print("Folding sequences using RNAplfold -W %i -L %i -c %f..." % (self.window_size,self.max_bp_span,self.avg_bp_prob_cutoff), end= ' ')
+            print("Folding sequences using RNAplfold -W %i -L %i -c %f --noLP..." % (self.window_size,self.max_bp_span,self.avg_bp_prob_cutoff), end= ' ')
             sys.stdout.flush()
 
         seqs = fasta_to_sequence(self.fasta)
@@ -89,7 +89,7 @@ class RNAVectorizer():
     def _vectorize_graphs(self,graphs):
         """Vectorize the RNAplfold graphs using EDeN"""
         if self.verbose:
-            print("Vectorizing (complexity: %i, hashing: %i bits)...", end= ' ')
+            print("Vectorizing (complexity: %i, hashing: %i bits)..." % (self.complexity,self.nbits), end= ' ')
             sys.stdout.flush()
 
         vec = Vectorizer(complexity=self.complexity,nbits=self.nbits)
@@ -112,7 +112,7 @@ class RNAVectorizer():
         store['features'] = df
         store.close()
 
-        if verbose:
+        if self.verbose:
             print("RNA features saved in %s" % self.output)
             sys.stdout.flush()
 
