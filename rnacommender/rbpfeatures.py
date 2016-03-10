@@ -22,7 +22,7 @@ __email__ = "gianluca.corrado@unitn.it"
 __status__ = "Production"
 
 class RBPVectorizer():
-    """Computes the RBP features"""
+    """Compute the RBP features"""
     def __init__(self,fasta_ref,fasta_sel,output,include_all_sel=False,verbose=True):
         """
         Parameters
