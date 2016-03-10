@@ -305,27 +305,17 @@ class RBPVectorizer():
             con = con.fillna(0.0)
             return con
 
-        def seq_names(fasta_file):
-            """Get sequence names from fasta file"""
-            names = []
-            f = open(fasta_file)
-            fasta = f.read()
-            f.close()
-            for a in fasta.split('>'):
-                names.append(a.split('\n')[0])
-            return [a for a in names if a != '']
-
         if self.verbose:
             print("Computing Fisher scores...", end=' ')
             sys.stdout.flush()
 
-        ref_names = seq_names(self.fasta_ref)
+        ref_names = fasta_utils.seq_names(self.fasta_ref)
         ref = dom_features(self._fisher_ref_fold,dom_list,names=ref_names)
         ekm_ref = ref.T.dot(ref)
         ekm_ref.index = ekm_ref.columns
 
         if self.include_all_sel:
-            sel_names = seq_names(self.fasta_sel)
+            sel_names = fasta_utils.seq_names(self.fasta_sel)
             sel = dom_features(self._fisher_sel_fold,dom_list, names=sel_names)
         else:
             sel = dom_features(self._fisher_sel_fold,dom_list)
