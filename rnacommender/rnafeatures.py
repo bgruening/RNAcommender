@@ -122,7 +122,7 @@ if __name__ == '__main__':
     parser.add_argument('fasta', metavar='fasta', type=str,
                         help="""Fasta file containing the RNA sequences.""")
     parser.add_argument('output', metavar='output', type=str,
-                        help="""File name of the HDF Store containing the RBP features.""")
+                        help="""File name of the HDF Store to save the RNA features.""")
     # RNAplfold parameters
     parser.add_argument('--window-size', metavar='window_size', type=int, default=150,
                         help="""Window size of RNAplfold.""")

@@ -374,7 +374,7 @@ if __name__ == '__main__':
     parser.add_argument('fasta_sel', metavar='fasta_sel', type=str,
                         help="""Fasta file containing the selected RBP sequences.""")
     parser.add_argument('output', metavar='output', type=str,
-                        help="""File name of the HDF Store containing the RBP features.""")
+                        help="""File name of the HDF Store to save the RBP features.""")
     parser.add_argument('--all-sel', dest='all_sel', action='store_true', default=False,
                         help="""Return one vector for each selected RBP (even if the similarity is null with all the reference RBPs).""")
     parser.add_argument('--quiet', dest='quiet', action='store_true', default=False,
