@@ -342,7 +342,7 @@ class RBPVectorizer():
 
         if self.verbose:
             print("Done.\n")
-            print("RBP features saved in %s" % self.output)
+            print("RBP features saved to %s" % self.output)
             sys.stdout.flush()
 
     def vectorize(self):

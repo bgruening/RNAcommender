@@ -113,7 +113,8 @@ class RNAVectorizer():
         store.close()
 
         if self.verbose:
-            print("RNA features saved in %s" % self.output)
+            print("Done.\n")
+            print("RNA features saved to %s" % self.output)
             sys.stdout.flush()
 
 if __name__ == '__main__':
