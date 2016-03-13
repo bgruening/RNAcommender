@@ -87,7 +87,7 @@ class Model():
 
             return (norm_proteins/num_proteins + norm_rnas/num_rnas + norm_B/num_B)/3
 
-        # mean squadred error
+        # mean squared error
         cost_ = (T.sqr(y - y_hat)).mean()
         reg = lambda_reg*_regularization()
         cost = cost_+reg

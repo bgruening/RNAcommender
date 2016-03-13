@@ -8,7 +8,7 @@ __status__ = "Production"
 
 def import_fasta(fasta_file):
     """
-    Import a fasta file as a dictionary, k:v, where k is the
+    Import a fasta file as a dictionary, {k:v}, where k is the
     sequence name, and v is the sequence.
     """
     dic = {}
@@ -21,6 +21,27 @@ def import_fasta(fasta_file):
         if k != '':
             dic[k] = v
     return dic
+
+def export_fasta(dic):
+    """
+    Export a dictionary, {k:v}, where k is the
+    sequence name, and v is the sequence, in
+    fasta format.
+    """
+    fasta = ""
+    for (k,v) in dic.iteritems():
+        fasta += ">%s\n%s\n" % (k,v)
+    return fasta
+
+def seq_names(fasta_file):
+    """Get sequence names from fasta file"""
+    names = []
+    f = open(fasta_file)
+    fasta = f.read()
+    f.close()
+    for a in fasta.split('>'):
+        names.append(a.split('\n')[0])
+    return [a for a in names if a != '']
 
 def stockholm2fasta(stockholm):
     """
