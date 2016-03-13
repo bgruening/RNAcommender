@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
+import sys
 import argparse
 import cPickle
 
-from data import TrainDataset
-from model import Model
+from data import PredictDataset
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -61,6 +61,7 @@ class Predictor():
             print("RBP\ttarget\ty_hat")
             for (p,r,s) in izip(P_names,R_names,y_hat):
                 print("%s\t%s\t%.3f" % (p,r,s))
+                sys.stdout.flush()
         # output to file
         else:
             nf = open(self.output,"w")

@@ -1,4 +1,5 @@
 from __future__ import print_function
+import sys
 import numpy as np
 from theano import function, shared, config
 import theano.tensor as T
