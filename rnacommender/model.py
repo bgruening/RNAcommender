@@ -113,7 +113,7 @@ class Model():
         # predict
         self.predict = function(
                 inputs=[Fp,Fr],
-                outputs=[y_hat])
+                outputs=y_hat)
 
         if verbose:
             print("Done.")
