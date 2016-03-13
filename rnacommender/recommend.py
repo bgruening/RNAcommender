@@ -4,6 +4,7 @@ from __future__ import print_function
 import sys
 import argparse
 import cPickle
+from itertools import izip
 
 from data import PredictDataset
 
