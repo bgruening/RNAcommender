@@ -23,3 +23,19 @@ Include the following executable files in your PATH:
 pip install git+https://github.com/fabriziocosta/EDeN.git --user
 ```
 
+Example
+=======
+Here the instructions to use RNAcommender on the datasets provided as examples. Complete documentation of each python script can be accessed using the -h command.
+
+Protein features (training)
+---------------------------
+'''rbpfeatures.py''' produces the protein features. It requires two fasta files: one with the sequences of the proteins used as reference for the similarity, and one for the proteins for which we want to have the features. When computing the protein features for the protein in the training set we want these two set to be exactly identical. We compute the features for the training proteins by executing the following command:
+
+```python
+python rbpfeatures.py ../examples/rbps_HT.fa ../examples/rbps_HT.fa ../examples/rbps_HT.h5 --all-sel
+```
+rbps_HT.h5 is the output file that will store the features, the flag --all-sel forces the inclusion of all the selected sequences in the output. In this case if a train protein has no similarity with the other proteins we still want it to use it (this protein will be represented by its one-hot encoding).
+
+RNA features
+------------
+
