@@ -29,7 +29,7 @@ Here the instructions to use RNAcommender on the datasets provided as examples. 
 
 Protein features (training)
 ---------------------------
-'''rbpfeatures.py''' produces the protein features. It requires two fasta files: one with the sequences of the proteins used as reference for the similarity, and one for the proteins for which we want to have the features. When computing the protein features for the protein in the training set we want these two set to be exactly identical. We compute the features for the training proteins by executing the following command:
+```rbpfeatures.py``` produces the protein features. It requires two fasta files: one with the sequences of the proteins used as reference for the similarity, and one for the proteins for which we want to have the features. When computing the protein features for the protein in the training set we want these two set to be exactly identical. We compute the features for the training proteins by executing the following command:
 
 ```bash
 python rbpfeatures.py ../examples/rbps_HT.fa ../examples/rbps_HT.fa ../examples/rbps_HT.h5 --all-sel
@@ -38,4 +38,8 @@ rbps_HT.h5 is the output file that will store the features, the flag --all-sel f
 
 RNA features
 ------------
+```rnafeatures.py``` produces the RNA features. It requires in input the fasta file and the name of the output file that will store the features.
 
+```bash
+python rnafeatures.py ../examples/utrs_HT.fa  ../examples/utrs_HT.h5
+```
