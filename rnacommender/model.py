@@ -46,6 +46,7 @@ class Model():
 
         if verbose:
             print("Compiling model...", end=' ')
+            sys.stdout.flush()
 
         np.random.seed(seed)
         # explictit features for proteins
@@ -113,6 +114,7 @@ class Model():
 
         if verbose:
             print("Done.")
+            sys.stdout.flush()
 
     def get_params(self):
         """Return the parameters of the model"""
