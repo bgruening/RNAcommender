@@ -18,7 +18,7 @@ __status__ = "Production"
 
 class Trainer():
     """Train a model on a dataset"""
-    def __init__(self,train_dataset,model,num_epochs,model_save,verbose=True):
+    def __init__(self,train_dataset,model,num_epochs,save_model,verbose=True):
         """
         Params
         ------
@@ -42,7 +42,7 @@ class Trainer():
         self.model = model
         self.epoch = 0
         self.num_epochs = num_epochs
-        self.model_save = model_save
+        self.save_model = save_model
         self.verbose = verbose
 
     def _train_epoch(self):
@@ -69,10 +69,10 @@ class Trainer():
 
     def _save_model(self):
         """Dump a model to a pkl"""
-        f = open(self.model_save,"w")
+        f = open(self.save_model,"w")
         cPickle.dump(self.model,f,protocol=2)
         f.close()
-        print("Model saved to %s" % self.model_save)
+        print("Model saved to %s" % self.save_model)
 
     def train(self):
         """Train the model"""
@@ -116,7 +116,7 @@ if __name__ == '__main__':
     # Trainer arguments
     parser.add_argument('--train-epochs', metavar='train_epochs', type=int, default=10,
                         help="""File name to save the trained model.""")
-    parser.add_argument('--save-model', metavar='save_model', type=str, default=None,
+    parser.add_argument('save_model', metavar='save_model', type=str, default=None,
                         help="""File name to save the trained model.""")
 
     # general arguments
@@ -147,7 +147,7 @@ if __name__ == '__main__':
 
     # Define the Trainer and train the model
     T = Trainer(train_dataset=dataset,model=M,num_epochs=args.train_epochs,
-        model_save=args.save_model,verbose=(not args.quiet))
+        save_model=args.save_model,verbose=(not args.quiet))
     T.train()
 
 
