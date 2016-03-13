@@ -38,14 +38,14 @@ class Predictor():
         self.output = output
         self.verbose = verbose
 
-    def predict():
+    def predict(self):
         "Predict interaction values"
         if self.verbose:
             print("Predicting interactions...", end=' ')
             sys.stdout.flush()
         # predict the y_hat
         (P,P_names,R,R_names) = self.predict_dataset
-        y_hat = model.predict(P,R)
+        y_hat = self.model.predict(P,R)
         # sort the interactions according to y_hat
         ordering = sorted(range(len(y_hat)),key=lambda x:y_hat[x],reverse=True)
         P_names = P_names[ordering]
@@ -106,7 +106,7 @@ if __name__ == '__main__':
     dataset = D.load()
 
     # Define the Trainer and train the model
-    P = Predictor(predict_dataset=dataset,model=args.model,
+    P = Predictor(predict_dataset=dataset,trained_model=args.model,
         output=args.output,verbose=(not args.quiet))
     P.predict()
 
