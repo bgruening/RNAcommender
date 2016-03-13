@@ -13,20 +13,20 @@ __status__ = "Production"
 
 class Model():
     """Factorization model"""
-    def __init__(self,n,m,sp,sr,irange=0.01,learning_rate=0.01,lambda_reg=0.01,verbose=True,seed=1234):
+    def __init__(self,sp,sr,kp,kr,irange=0.01,learning_rate=0.01,lambda_reg=0.01,verbose=True,seed=1234):
         """
         Params
         ------
-        n : int
+        sp : int
             Number of protein features.
 
-        m : int
+        sr : int
             Number of RNA features.
 
-        sp : int
+        kp : int
             Size of the protein latent space.
 
-        sr : int
+        kr : int
             Size of the RNA latent space.
 
         irange : float (default : 0.01)
@@ -49,6 +49,8 @@ class Model():
             print("Compiling model...", end=' ')
             sys.stdout.flush()
 
+        self.learning_rate = learning_rate
+        self.lambda_reg = lambda_reg
         np.random.seed(seed)
         # explictit features for proteins
         Fp = T.matrix("Fp",dtype=config.floatX)
@@ -58,13 +60,13 @@ class Model():
         y = T.vector("y")
 
         # projection matrix for proteins
-        self.Ap = shared(((.5 - np.random.rand(sp,n)) * irange).astype(config.floatX), name="Ap")
-        self.bp = shared(((.5 - np.random.rand(sp)) * irange).astype(config.floatX), name="bp")
+        self.Ap = shared(((.5 - np.random.rand(kp,sp)) * irange).astype(config.floatX), name="Ap")
+        self.bp = shared(((.5 - np.random.rand(kp)) * irange).astype(config.floatX), name="bp")
         # projection matrix for RNAs
-        self.Ar = shared(((.5 - np.random.rand(sr,m)) * irange).astype(config.floatX), name="Ar")
-        self.br = shared(((.5 - np.random.rand(sr)) * irange).astype(config.floatX), name="br")
+        self.Ar = shared(((.5 - np.random.rand(kr,sr)) * irange).astype(config.floatX), name="Ar")
+        self.br = shared(((.5 - np.random.rand(kr)) * irange).astype(config.floatX), name="br")
         # generalization matrix
-        self.B = shared(((.5 - np.random.rand(sp,sr)) * irange).astype(config.floatX), name="B")
+        self.B = shared(((.5 - np.random.rand(kp,kr)) * irange).astype(config.floatX), name="B")
 
         # Latent space for proteins
         P = T.nnet.sigmoid(T.dot(Fp,self.Ap.T) + self.bp)

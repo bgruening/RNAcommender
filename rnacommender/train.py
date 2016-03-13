@@ -106,9 +106,9 @@ if __name__ == '__main__':
                         help="""Standardize RNA features.""")
 
     # Model arguments
-    parser.add_argument('--sp', metavar='sp', type=int, default=5,
+    parser.add_argument('--kp', metavar='kp', type=int, default=5,
                         help="""Size of the protein latent space.""")
-    parser.add_argument('--sr', metavar='sr', type=int, default=50,
+    parser.add_argument('--kr', metavar='kr', type=int, default=50,
                         help="""Size of the RNA latent space.""")
     parser.add_argument('--learning-rate', metavar='learning_rate', type=float, default=1.0,
                         help="""Learning rate for the weights update.""")
@@ -137,8 +137,8 @@ if __name__ == '__main__':
         return a.shape[0]
 
     # Define model
-    M = Model(n=feature_size(args.Fp),m=feature_size(args.Fr),
-        sp=args.sp,sr=args.sr,learning_rate=args.learning_rate,lambda_reg=args.lambda_reg,
+    M = Model(sp=feature_size(args.Fp),sr=feature_size(args.Fr),
+        kp=args.sp,kr=args.sr,learning_rate=args.learning_rate,lambda_reg=args.lambda_reg,
         verbose=(not args.quiet),seed=args.seed)
 
     # Define and instantiate dataset
