@@ -138,7 +138,7 @@ if __name__ == '__main__':
 
     # Define model
     M = Model(sp=feature_size(args.Fp),sr=feature_size(args.Fr),
-        kp=args.sp,kr=args.sr,learning_rate=args.learning_rate,lambda_reg=args.lambda_reg,
+        kp=args.kp,kr=args.kr,learning_rate=args.learning_rate,lambda_reg=args.lambda_reg,
         verbose=(not args.quiet),seed=args.seed)
 
     # Define and instantiate dataset
