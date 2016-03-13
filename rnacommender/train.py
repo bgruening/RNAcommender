@@ -37,7 +37,6 @@ class Trainer():
         verbose : bool (default : True)
             Print information at STDOUT.
         """
-
         self.train_dataset = train_dataset
         self.model = model
         self.epoch = 0
@@ -66,6 +65,7 @@ class Trainer():
     def _print_monitor(self,cost,time=0.):
         """Monitoring step"""
         print("Epoch %i, cost: %f, elapsed time: %.1f sec" % (self.epoch,cost,time))
+        sys.stdout.flush()
 
     def _save_model(self):
         """Dump a model to a pkl"""
@@ -73,6 +73,7 @@ class Trainer():
         cPickle.dump(self.model,f,protocol=2)
         f.close()
         print("Model saved to %s" % self.save_model)
+        sys.stdout.flush()
 
     def train(self):
         """Train the model"""
