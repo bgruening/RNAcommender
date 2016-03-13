@@ -43,3 +43,12 @@ RNA features
 ```bash
 python rnafeatures.py ../examples/utrs_HT.fa  ../examples/utrs_HT.h5
 ```
+
+Interaction matrix
+------------------
+```interaction.py``` prepares the interaction matrix. It requires a file containing the interaction map (see interactions_HT.txt in examples), and the name of the output file where to store the interaction matrix.
+
+```bash
+python interactions.py ../examples/interactions_HT.txt  ../examples/interactions_HT.h5
+```
+
