@@ -85,19 +85,19 @@ python rnafeatures.py ../examples/utrs.fa  ../examples/utrs.h5
 
 Obtaining the recommendations
 -----------------------------
-```recommend.py``` uses a trained recommender to return a ranked list of protein-RNA interactions. It requires the features for the unknown proteins, and the features for the RNAs. Additionally we can specify an output file to store the results (otherwise they will be print at STDOUT):
+```recommend.py``` uses a trained recommender to return a ranked list of protein-RNA interactions. It requires the features for the unknown proteins, and the features for the RNAs and the trained model. Additionally we can specify an output file to store the results (otherwise they will be print at STDOUT):
 
 ```bash
-python recommend.py ../examples/rbps_new.h5  ../examples/utrs.h5 --output ../examples/recommendations.txt --standardize-Fr
+python recommend.py ../examples/rbps_new.h5  ../examples/utrs.h5 ../examples/trained_from_AURA_HT.pkl --output ../examples/recommendations.txt --standardize-Fr
 ```
 We added again the flag ```--standardize-Fr``` to match the case used during training.
 
 It is also possible to specify one or more protein that will be included in the results (all the others will be discarded). For example:
 ```bash
-python recommend.py ../examples/rbps_new.h5  ../examples/utrs.h5 --output ../examples/recommendations.txt --standardize-Fr --to-predict RALY
+python recommend.py ../examples/rbps_new.h5  ../examples/utrs.h5 ../examples/trained_from_AURA_HT.pkl --output ../examples/recommendations.txt --standardize-Fr --to-predict RALY
 ```
 will recommend RNA targets only to the protein RALY, while:
 ```bash
-python recommend.py ../examples/rbps_new.h5  ../examples/utrs.h5 --output ../examples/recommendations.txt --standardize-Fr --to-predict ANKHD1 RALY
+python recommend.py ../examples/rbps_new.h5  ../examples/utrs.h5 ../examples/trained_from_AURA_HT.pkl --output ../examples/recommendations.txt --standardize-Fr --to-predict ANKHD1 RALY
 ```
 will recommend RNA targets to the proteins ANKHD1 and RALY.
