@@ -66,6 +66,8 @@ Recommending
 ============
 Here the instructions to train a model using RNAcommender. Complete documentation of each python script can be accessed using the -h command. RNAcommender produces a ranked list of protein-RNA interactions.
 
+NOTE: if you want to use our pretrained recommender be sure to set the Theano flag floatX=float32.
+
 Protein features (recommending)
 -------------------------------
 ```rbpfeatures.py``` produces the protein features. It requires two fasta files: one with the sequences of the proteins used as reference for the similarity (which are the one used for training the model), and one for the proteins for which we want to have the features (which are the unexplored proteins). We compute the features for the unexplored proteins by executing the following command:
