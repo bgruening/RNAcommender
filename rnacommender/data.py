@@ -251,4 +251,4 @@ class PredictDataset(Dataset):
         if self.verbose:
             print("Done.\n")
 
-        return(P,R,np.array(P_names),np.array(R_names))
+        return(P,np.array(P_names),R,np.array(R_names))
