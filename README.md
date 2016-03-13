@@ -4,8 +4,9 @@ RNAcommender is a tool for genome-wide recommendation of RNA-protein interaction
 Requirements
 ============
 RNAcommender requires some softwares that are not available as Python packages:
-* From the Vienna RNA package (v 2.1.8 or later):
+* From the Vienna RNA package (2.1.8 or later) [[download](https://www.tbi.univie.ac.at/RNA/)]:
     - RNAplfold
-* From SAM 3.5:
+* From SAM (v3.5) [[download](https://compbio.soe.ucsc.edu/sam2src/)]:
     - build_model
     - get_fisher_scores
+
