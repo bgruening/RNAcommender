@@ -58,10 +58,12 @@ class Trainer():
     def _test_epoch(self):
         """Compute the cost on the training set"""
         cumcost = 0.
+        batches = 0
         for (P,R,I) in self.train_dataset:
             y_hat,cost = self.model.test(P,R,I)
             cumcost += cost
-        return cumcost
+            batches += 1
+        return (cumcost / batches)
 
     def _print_monitor(self,cost,time=0.):
         """Monitoring step"""
