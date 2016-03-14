@@ -10,7 +10,7 @@ Include the following executable files in your PATH:
 * From the Vienna RNA package (2.1.8) [[download](https://www.tbi.univie.ac.at/RNA/)]:
     - RNAplfold
 
-* Python packages required (and versions used during test):
+* Python packages required (and versions used during development):
     - numpy 1.8.1
     - pandas 0.17.1
     - tables 3.2.2.dev0
