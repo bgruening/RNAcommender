@@ -365,7 +365,7 @@ class RBPVectorizer():
 
     def vectorize(self):
         """Produce the RBP features"""
-        # create a temporary hidden folder
+        # create a temporary folder
         mkdir(self._temp_fold)
         # scan the RBP sequences against Pfam
         self._pfam_scan()
@@ -382,7 +382,7 @@ class RBPVectorizer():
         self._compute_fisher_scores(dom_list)
         # compute the empirical kernel map
         self._ekm(dom_list)
-        # create a temporary hidden folder
+        # remove the temporary folder
         rmtree(self._temp_fold)
 
 if __name__ == '__main__':
