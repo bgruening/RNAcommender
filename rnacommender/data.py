@@ -1,7 +1,11 @@
 from __future__ import print_function
+
 import sys
+
 import numpy as np
+
 import pandas as pd
+
 from theano import config
 
 __author__ = "Gianluca Corrado"
@@ -11,17 +15,18 @@ __maintainer__ = "Gianluca Corrado"
 __email__ = "gianluca.corrado@unitn.it"
 __status__ = "Production"
 
+
 class Dataset(object):
-    def __init__(self,Fp,Fr,
-        standardize_proteins=False,standardize_rnas=False,
-        verbose=True):
+
+    def __init__(self, fp, fr, standardize_proteins=False,
+                 standardize_rnas=False, verbose=True):
         """
         Parameters
         ----------
-        Fp : str
+        fp : str
             The name of the HDF5 file containing features for the proteins.
 
-        Fr : str
+        fr : str
             The name of the HDF5 file containing features for the RNAs.
 
         standardize_proteins : bool (default : False)
@@ -35,13 +40,13 @@ class Dataset(object):
         """
         self.verbose = verbose
 
-        def standardize(X):
-            Xmean = X.mean(axis=1)
-            Xstd = X.std(axis=1)
-            Xstd[Xstd == 0.0] = 1.0
-            return ((X.T - Xmean) / Xstd).T
+        def standardize(x):
+            x_mean = x.mean(axis=1)
+            x_std = x.std(axis=1)
+            x_std[x_std == 0.0] = 1.0
+            return ((x.T - x_mean) / x_std).T
 
-        store = pd.io.pytables.HDFStore(Fp)
+        store = pd.io.pytables.HDFStore(fp)
         self.Fp = store.features.astype(config.floatX)
         store.close()
         if self.verbose:
@@ -50,14 +55,14 @@ class Dataset(object):
 
         if standardize_proteins:
             if self.verbose:
-                print('Standardizing protein features...', end = ' ')
+                print('Standardizing protein features...', end=' ')
                 sys.stdout.flush()
             self.Fp = standardize(self.Fp)
             if self.verbose:
                 print('Done.')
                 sys.stdout.flush()
 
-        store = pd.io.pytables.HDFStore(Fr)
+        store = pd.io.pytables.HDFStore(fr)
         self.Fr = store.features.astype(config.floatX)
         store.close()
         if self.verbose:
@@ -66,7 +71,7 @@ class Dataset(object):
 
         if standardize_rnas:
             if self.verbose:
-                print('Standardizing RNA features...', end = ' ')
+                print('Standardizing RNA features...', end=' ')
                 sys.stdout.flush()
             self.Fr = standardize(self.Fr)
             if self.verbose:
@@ -76,23 +81,25 @@ class Dataset(object):
     def load(self):
         raise NotImplementedError()
 
+
 class TrainDataset(Dataset):
-    def __init__(self,Fp,Fr,Y,
-        standardize_proteins=False,standardize_rnas=False,
-        verbose=True, seed=1234):
+
+    def __init__(self, fp, fr, y, standardize_proteins=False,
+                 standardize_rnas=False, verbose=True, seed=1234):
         """
         Parameters
         ----------
-        Fp : str
+        fp : str
             The name of the HDF5 file containing features for the proteins.
 
-        Fr : str
+        fr : str
             The name of the HDF5 file containing features for the RNAs.
 
-        Y : str
+        y : str
             The name of the HDF5 file containing the interaction matrix.
-            The dataframe inside this file has proteins as columns and RNAs as rows (index).
-            A NaN is expected there if the interaction is supposedly unknown.
+            The dataframe inside this file has proteins as columns and RNAs as
+            rows (index). A NaN is expected there if the interaction is
+            supposedly unknown.
 
         standardize_proteins : bool (default : False)
             Whether protein features should be standardized.
@@ -106,30 +113,33 @@ class TrainDataset(Dataset):
         seed : int (default : 1234)
             Seed for random number generator.
         """
-        super(TrainDataset,self).__init__(Fp,Fr,standardize_proteins,standardize_rnas,verbose)
+        super(TrainDataset, self).__init__(fp, fr, standardize_proteins,
+                                           standardize_rnas, verbose)
 
-        store = pd.io.pytables.HDFStore(Y)
+        store = pd.io.pytables.HDFStore(y)
         self.Y = store.matrix.astype(config.floatX)
         store.close()
         if self.verbose:
             print('Interaction matrix of shape', self.Y.shape)
             sys.stdout.flush()
 
-        assert self.Fp.shape[1] == self.Y.shape[1] and self.Fr.shape[1] == self.Y.shape[0]
+        assert self.Fp.shape[1] == self.Y.shape[1] and \
+            self.Fr.shape[1] == self.Y.shape[0]
 
         self.seed = seed
-
 
     def load(self):
         """
         Returns
         -------
         dataset : list
-            List of triplets (P,R,I) representing the batches.
+            List of triplets (p,r,i) representing the batches.
             Each batch is made of all the labeled examples of one RNA.
         """
         if self.verbose:
-            print('\nmaking training set (%d user%s and %d item%s)...' % (len(self.Y.columns), (len(self.Y.columns)>1)*'s',len(self.Y.index),(len(self.Y.index)>1)*'s'))
+            print('\nmaking training set (%d user%s and %d item%s)...' % (
+                len(self.Y.columns), (len(self.Y.columns) > 1) * 's',
+                len(self.Y.index), (len(self.Y.index) > 1) * 's'))
             sys.stdout.flush()
 
         protein_input_dim = self.Fp.shape[0]
@@ -141,36 +151,37 @@ class TrainDataset(Dataset):
         num_batches = 0
 
         progress = 0
-        for (i,rna) in enumerate(self.Y.index):
-            if i % (len(self.Y.index)/10) == 0:
+        for (n, rna) in enumerate(self.Y.index):
+            if n % (len(self.Y.index) / 10) == 0:
                 if self.verbose:
-                    print(str(progress) + "%",end=' ')
+                    print(str(progress) + "%", end=' ')
                     sys.stdout.flush()
                 progress += 10
             num_examples = self.Y.loc[rna].count().sum()  # understands NaN
-            P = np.zeros((num_examples,protein_input_dim)).astype(config.floatX)
-            R = np.zeros((num_examples,rna_input_dim)).astype(config.floatX)
-            I = np.zeros((num_examples,1)).astype(config.floatX)
+            p = np.zeros((num_examples, protein_input_dim)
+                         ).astype(config.floatX)
+            r = np.zeros((num_examples, rna_input_dim)).astype(config.floatX)
+            i = np.zeros((num_examples, 1)).astype(config.floatX)
 
             index = 0
             for protein in self.Y.columns:
                 if np.isnan(self.Y[protein][rna]):
                     continue
-                P[index] = self.Fp[protein]
-                R[index] = self.Fr[rna]
-                I[index] = self.Y[protein][rna]
-                if I[index] > 0:
+                p[index] = self.Fp[protein]
+                r[index] = self.Fr[rna]
+                i[index] = self.Y[protein][rna]
+                if i[index] > 0:
                     num_pos += 1
                 else:
                     num_neg += 1
                 index += 1
 
             perm = np.random.permutation(range(num_examples))
-            P = np.matrix(P[perm])
-            R = np.matrix(R[perm])
-            I = np.array(I[perm].flatten())
+            p = np.matrix(p[perm])
+            r = np.matrix(r[perm])
+            i = np.array(i[perm].flatten())
 
-            dataset.append((P,R,I))
+            dataset.append((p, r, i))
             num_batches += 1
 
         np.random.seed(self.seed)
@@ -179,7 +190,7 @@ class TrainDataset(Dataset):
         if self.verbose:
             print("")
             print("Training set created")
-            print("\twith %i examples" % (num_pos+num_neg))
+            print("\twith %i examples" % (num_pos + num_neg))
             print("\tnumber of positives: %i" % num_pos)
             print("\tnumber of negatives: %i" % num_neg)
             print("\tnumber of batches: %i" % num_batches)
@@ -187,17 +198,18 @@ class TrainDataset(Dataset):
 
         return dataset
 
+
 class PredictDataset(Dataset):
-    def __init__(self,Fp,Fr,to_predict=None,
-        standardize_proteins=False,standardize_rnas=False,
-        verbose=True):
+
+    def __init__(self, fp, fr, to_predict=None, standardize_proteins=False,
+                 standardize_rnas=False, verbose=True):
         """
         Parameters
         ----------
-        Fp : str
+        fp : str
             The name of the HDF5 file containing features for the proteins.
 
-        Fr : str
+        fr : str
             The name of the HDF5 file containing features for the RNAs.
 
         to_predict : list (default : None)
@@ -213,7 +225,8 @@ class PredictDataset(Dataset):
         verbose : bool (default : True)
             Print information at STDOUT.
         """
-        super(PredictDataset,self).__init__(Fp,Fr,standardize_proteins,standardize_rnas,verbose)
+        super(PredictDataset, self).__init__(
+            fp, fr, standardize_proteins, standardize_rnas, verbose)
         self.to_predict = to_predict
         self.Fp = self.Fp[self.to_predict]
 
@@ -222,33 +235,36 @@ class PredictDataset(Dataset):
         Returns
         -------
         Examples to predict. For each example:
-            - P contains the protein features,
-            - R contains the RNA features,
-            - P_names contains the name of the protein,
-            - R_names contains the name of the RNA.
+            - p contains the protein features,
+            - r contains the RNA features,
+            - p_names contains the name of the protein,
+            - r_names contains the name of the RNA.
 
         """
         if self.verbose:
-            print('\nPreparing dataset (%d protein%s and %d RNA%s)...' % (self.Fp.shape[1], (self.Fp.shape[1]>1)*'s',self.Fr.shape[1],(self.Fr.shape[1]>1)*'s'), end=' ')
+            print('\nPreparing dataset (%d protein%s and %d RNA%s)...' % (
+                self.Fp.shape[1], (self.Fp.shape[1] > 1) *
+                's', self.Fr.shape[1],
+                (self.Fr.shape[1] > 1) * 's'), end=' ')
             sys.stdout.flush()
 
         protein_input_dim = self.Fp.shape[0]
         rna_input_dim = self.Fr.shape[0]
-        num_examples = self.Fp.shape[1]*self.Fr.shape[1]
-        P = np.zeros((num_examples,protein_input_dim)).astype(config.floatX)
-        P_names = []
-        R = np.zeros((num_examples,rna_input_dim)).astype(config.floatX)
-        R_names = []
+        num_examples = self.Fp.shape[1] * self.Fr.shape[1]
+        p = np.zeros((num_examples, protein_input_dim)).astype(config.floatX)
+        p_names = []
+        r = np.zeros((num_examples, rna_input_dim)).astype(config.floatX)
+        r_names = []
         index = 0
         for protein in self.Fp.columns:
             for rna in self.Fr.columns:
-                P[index] = self.Fp[protein]
-                P_names.append(protein)
-                R[index] = self.Fr[rna]
-                R_names.append(rna)
+                p[index] = self.Fp[protein]
+                p_names.append(protein)
+                r[index] = self.Fr[rna]
+                r_names.append(rna)
                 index += 1
 
         if self.verbose:
             print("Done.\n")
 
-        return (P,np.array(P_names),R,np.array(R_names))
+        return (p, np.array(p_names), r, np.array(r_names))
