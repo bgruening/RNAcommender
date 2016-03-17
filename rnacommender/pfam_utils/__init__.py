@@ -1,11 +1,11 @@
-import pandas as pd
-import requests
 import xml.etree.ElementTree as ET
-from xml.etree.ElementTree import ParseError
 from math import ceil
 from time import sleep
+from xml.etree.ElementTree import ParseError
 
-import fasta_utils
+import requests
+
+from rnacommneder import fasta_utils
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -14,11 +14,16 @@ __maintainer__ = "Gianluca Corrado"
 __email__ = "gianluca.corrado@unitn.it"
 __status__ = "Production"
 
+
 def search_header():
     """Return the header of a Pfam scan search"""
-    return "<seq id>        <alignment start>       <alignment end> <envelope start>        <envelope end>  <hmm acc>       <hmm name>      <type>  <hmm start>     <hmm end>       <hmm length>    <bit score>     <E-value>       <significance>  <clan>\n"
+    return "<seq id>        <alignment start>       <alignment end> \
+    <envelope start>        <envelope end>  <hmm acc>       <hmm name>\
+          <type>  <hmm start>     <hmm end>       <hmm length>    <bit score>\
+               <E-value>       <significance>  <clan>\n"
 
-def sequence_search(seq_id,seq):
+
+def sequence_search(seq_id, seq):
     """
     Input
     -----
@@ -34,30 +39,30 @@ def sequence_search(seq_id,seq):
         given sequence
     """
 
-    def add_spaces(text,mul=8):
+    def add_spaces(text, mul=8):
         """
         Add spaces to a string. The resulting string will be of length
         multiple of mul.
         """
         l = len(text)
-        next_mul = int(ceil(l / mul)+1) * mul
+        next_mul = int(ceil(l / mul) + 1) * mul
         offset = next_mul - l
         if offset == 0:
             offset = 8
-        return text + " "*offset
+        return text + " " * offset
 
     url = "http://pfam.xfam.org/search/sequence"
-    params = {'seq' : seq,
-            'evalue' : '1.0',
-            'output' : 'xml' }
-    req = requests.get(url,params=params)
+    params = {'seq': seq,
+              'evalue': '1.0',
+              'output': 'xml'}
+    req = requests.get(url, params=params)
     xml = req.text
     try:
         root = ET.fromstring(xml)
     # sometimes Pfam returns the HTML code
     except ParseError:
         print "resending: %s" % seq_id
-        return "%s" % sequence_search(seq_id,seq)
+        return "%s" % sequence_search(seq_id, seq)
 
     result_url = root[0][1].text
     # wait for Pfam to compute the results
@@ -94,6 +99,7 @@ def sequence_search(seq_id,seq):
             ret += add_spaces(location.attrib['significant'])
             ret += "None\n"
     return ret
+
 
 def download_seed_seqs(acc):
     """
