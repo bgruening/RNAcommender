@@ -6,6 +6,7 @@ __maintainer__ = "Gianluca Corrado"
 __email__ = "gianluca.corrado@unitn.it"
 __status__ = "Production"
 
+
 def import_fasta(fasta_file):
     """
     Import a fasta file as a dictionary, {k:v}, where k is the
@@ -22,6 +23,7 @@ def import_fasta(fasta_file):
             dic[k] = v
     return dic
 
+
 def export_fasta(dic):
     """
     Export a dictionary, {k:v}, where k is the
@@ -29,9 +31,10 @@ def export_fasta(dic):
     fasta format.
     """
     fasta = ""
-    for (k,v) in dic.iteritems():
-        fasta += ">%s\n%s\n" % (k,v)
+    for (k, v) in dic.iteritems():
+        fasta += ">%s\n%s\n" % (k, v)
     return fasta
+
 
 def seq_names(fasta_file):
     """Get sequence names from fasta file"""
@@ -42,6 +45,7 @@ def seq_names(fasta_file):
     for a in fasta.split('>'):
         names.append(a.split('\n')[0])
     return [a for a in names if a != '']
+
 
 def stockholm2fasta(stockholm):
     """
@@ -58,6 +62,6 @@ def stockholm2fasta(stockholm):
             return fasta
         # alignment line
         else:
-            name,align = line.split()
-            seq = align.replace(".","")
-            fasta += ">%s\n%s\n" % (name,seq)
+            name, align = line.split()
+            seq = align.replace(".", "")
+            fasta += ">%s\n%s\n" % (name, seq)
