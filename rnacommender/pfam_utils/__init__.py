@@ -1,9 +1,13 @@
+"""Utils for PFAM."""
+
 import xml.etree.ElementTree as ET
 from math import ceil
 from time import sleep
 from xml.etree.ElementTree import ParseError
 
 import requests
+
+import pandas as pd
 
 from rnacommender import fasta_utils
 
@@ -16,7 +20,7 @@ __status__ = "Production"
 
 
 def search_header():
-    """Return the header of a Pfam scan search"""
+    """Return the header of a Pfam scan search."""
     return "<seq id>        <alignment start>       <alignment end> \
     <envelope start>        <envelope end>  <hmm acc>       <hmm name>\
           <type>  <hmm start>     <hmm end>       <hmm length>    <bit score>\
@@ -25,6 +29,8 @@ def search_header():
 
 def sequence_search(seq_id, seq):
     """
+    Search a sequence against PFAM.
+
     Input
     -----
     seq_id : str
@@ -38,12 +44,8 @@ def sequence_search(seq_id, seq):
         Formatted string containing the results of the Pfam scan for the
         given sequence
     """
-
     def add_spaces(text, mul=8):
-        """
-        Add spaces to a string. The resulting string will be of length
-        multiple of mul.
-        """
+        """Add spaces to a string."""
         l = len(text)
         next_mul = int(ceil(l / mul) + 1) * mul
         offset = next_mul - l
@@ -101,8 +103,22 @@ def sequence_search(seq_id, seq):
     return ret
 
 
+def read_pfam_output(pfam_out_file):
+    """Read the output of PFAM scan."""
+    cols = ["seq_id", "alignment_start", "alignment_end", "envelope_start",
+            "envelope_end", "hmm_acc", "hmm_name", "type", "hmm_start",
+            "hmm_end", "hmm_length", "bit_score", "E-value", "significance",
+            "clan"]
+    data = pd.read_table(pfam_out_file,
+                         sep="\s*", skip_blank_lines=True, skiprows=1,
+                         names=cols)
+    return data
+
+
 def download_seed_seqs(acc):
     """
+    Download seed sequences from PFAM.
+
     Input
     -----
     acc : str
@@ -113,7 +129,6 @@ def download_seed_seqs(acc):
     fasta : str
         Seed sequences in fasta format
     """
-
     url = "http://pfam.xfam.org/family/%s/alignment/seed" % acc
     req = requests.get(url)
     stockholm = req.text
