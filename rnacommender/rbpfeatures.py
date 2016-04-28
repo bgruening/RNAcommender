@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Compute the RBP features."""
 
 from __future__ import print_function
 
@@ -26,12 +27,14 @@ __status__ = "Production"
 
 
 class RBPVectorizer():
-    """Compute the RBP features"""
+    """Compute the RBP features."""
 
     def __init__(self, fasta_ref, fasta_sel, output, include_all_sel=False,
                  verbose=True):
         """
-        Parameters
+        Constructor.
+
+        Parameter
         ----------
         fasta_ref : str
             Fasta file containing the reference sequences. The similarity will
@@ -74,7 +77,7 @@ class RBPVectorizer():
         self._fisher_sel_fold = "%s/fisher_scores_sel" % self._temp_fold
 
     def _pfam_scan(self):
-        """Scan the sequences against the Pfam database"""
+        """Scan the sequences against the Pfam database."""
         if self.verbose:
             print("Scanning RBP sequences against Pfam...")
             sys.stdout.flush()
@@ -141,7 +144,7 @@ class RBPVectorizer():
             sys.stdout.flush()
 
     def _overlapping_domains(self):
-        """Compute the set of domains contributing to the similarity"""
+        """Compute the set of domains contributing to the similarity."""
         if self.verbose:
             print("Determining domain list...", end=' ')
             sys.stdout.flush()
@@ -167,8 +170,7 @@ class RBPVectorizer():
         return dom_list
 
     def _prepare_domains(self, dom_list):
-        """Select domain subsequences from the entire protein sequences"""
-
+        """Select domain subsequences from the entire protein sequences."""
         def prepare_domains(fasta_dic, dom_list, pfam_scan, out_folder):
             out_file_dic = {}
             for acc in dom_list:
@@ -210,7 +212,7 @@ class RBPVectorizer():
             sys.stdout.flush()
 
     def _download_seeds(self, dom_list):
-        """Download seed sequences for the needed domains"""
+        """Download seed sequences for the needed domains."""
         if self.verbose:
             print("Downloading domain seeds from http://pfam.xfam.org/...",
                   end=' ')
@@ -230,7 +232,7 @@ class RBPVectorizer():
             sys.stdout.flush()
 
     def _build_models(self, dom_list):
-        """Wrapper for SAM 3.5 buildmodel"""
+        """Wrapper for SAM 3.5 buildmodel."""
         if self.verbose:
             print("Building HMM models...")
             sys.stdout.flush()
@@ -247,7 +249,7 @@ class RBPVectorizer():
             sys.stdout.flush()
 
     def _compute_fisher_scores(self, dom_list):
-        """Wrapper for SAM 3.5 get_fisher_scores"""
+        """Wrapper for SAM 3.5 get_fisher_scores."""
         def get_fisher_scores(dom_list, mod_fold, dom_fold, fisher_fold):
             for acc in dom_list:
                 cmd = "get_fisher_scores run -i %s/%s.mod -db %s/%s.fa" % (
@@ -274,16 +276,17 @@ class RBPVectorizer():
             sys.stdout.flush()
 
     def _ekm(self, dom_list):
-        """Compute the empirical kernel map from the Fisher scores"""
+        """Compute the empirical kernel map from the Fisher scores."""
         def process_seg(e):
-            """Process segment of a SAM 3.5 get_fisher_scores output file"""
+            """Process segment of a SAM 3.5 get_fisher_scores output file."""
             seg = e.split()
             c = seg[0].split(':')[0]
             m = map(float, seg[3:])
             return c, m
 
         def read_sam_file(samfile):
-            """Read a SAM 3.5 get_fisher_scores output file"""
+            """Read a SAM 3.5 get_fisher_scores output file."""
+            print(samfile)  # debug
             f = open(samfile)
             data = f.read()
             f.close()
@@ -292,20 +295,22 @@ class RBPVectorizer():
             m = []
             split = re.split(">A ", data)[1:]
             for e in split:
-                c, m = process_seg(e)
+                c, m_ = process_seg(e)
                 columns.append(c)
-                m.append(m)
+                m.append(m_)
 
             m = np.matrix(m)
+            print(m.shape)  # debug
+            print(columns)  # debug
             df = pd.DataFrame(data=m.T, columns=columns)
             return df
 
         def dom_features(fisher_fold, dom_list, names=None):
-            """Compute the features with respect to a domain type"""
+            """Compute the features with respect to a domain type."""
             dfs = []
             for acc in dom_list:
                 df = read_sam_file("%s/%s.txt" % (fisher_fold, acc))
-                df = df.groupby(df.columns, saxis=1).mean()
+                df = df.groupby(df.columns, axis=1).mean()
                 dfs.append(df)
 
             con = pd.concat(dfs, ignore_index=True)
@@ -364,7 +369,7 @@ class RBPVectorizer():
             sys.stdout.flush()
 
     def vectorize(self):
-        """Produce the RBP features"""
+        """Produce the RBP features."""
         # create a temporary folder
         mkdir(self._temp_fold)
         # scan the RBP sequences against Pfam

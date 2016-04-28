@@ -111,7 +111,7 @@ def read_pfam_output(pfam_out_file):
             "clan"]
     data = pd.read_table(pfam_out_file,
                          sep="\s*", skip_blank_lines=True, skiprows=1,
-                         names=cols)
+                         names=cols, engine='python')
     return data
 
 
