@@ -5,7 +5,7 @@ from xml.etree.ElementTree import ParseError
 
 import requests
 
-from rnacommneder import fasta_utils
+from rnacommender import fasta_utils
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
