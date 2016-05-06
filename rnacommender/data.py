@@ -1,3 +1,4 @@
+"""Dataset handler."""
 from __future__ import print_function
 
 import sys
@@ -17,10 +18,13 @@ __status__ = "Production"
 
 
 class Dataset(object):
+    """General dataset."""
 
     def __init__(self, fp, fr, standardize_proteins=False,
                  standardize_rnas=False, verbose=True):
         """
+        Constructor.
+
         Parameters
         ----------
         fp : str
@@ -79,14 +83,18 @@ class Dataset(object):
                 sys.stdout.flush()
 
     def load(self):
+        """Load dataset in memory."""
         raise NotImplementedError()
 
 
 class TrainDataset(Dataset):
+    """Training dataset."""
 
     def __init__(self, fp, fr, y, standardize_proteins=False,
                  standardize_rnas=False, verbose=True, seed=1234):
         """
+        Constructor.
+
         Parameters
         ----------
         fp : str
@@ -130,8 +138,10 @@ class TrainDataset(Dataset):
 
     def load(self):
         """
-        Returns
-        -------
+        Load dataset in memory.
+
+        Return
+        ------
         dataset : list
             List of triplets (p,r,i) representing the batches.
             Each batch is made of all the labeled examples of one RNA.
@@ -200,10 +210,13 @@ class TrainDataset(Dataset):
 
 
 class PredictDataset(Dataset):
+    """Test dataset."""
 
     def __init__(self, fp, fr, to_predict=None, standardize_proteins=False,
                  standardize_rnas=False, verbose=True):
         """
+        Constructor.
+
         Parameters
         ----------
         fp : str
@@ -232,8 +245,10 @@ class PredictDataset(Dataset):
 
     def load(self):
         """
-        Returns
-        -------
+        Load dataset in memory.
+
+        Return
+        ------
         Examples to predict. For each example:
             - p contains the protein features,
             - r contains the RNA features,
