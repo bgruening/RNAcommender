@@ -34,7 +34,7 @@ class RBPVectorizer():
         """
         Constructor.
 
-        Parameter
+        Parameters
         ----------
         fasta_ref : str
             Fasta file containing the reference sequences. The similarity will
