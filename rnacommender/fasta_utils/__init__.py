@@ -1,3 +1,4 @@
+"""Util functions for FASTA format."""
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -8,10 +9,7 @@ __status__ = "Production"
 
 
 def import_fasta(fasta_file):
-    """
-    Import a fasta file as a dictionary, {k:v}, where k is the
-    sequence name, and v is the sequence.
-    """
+    """Import a fasta file as a dictionary."""
     dic = {}
     f = open(fasta_file)
     fasta = f.read().strip()
@@ -25,11 +23,7 @@ def import_fasta(fasta_file):
 
 
 def export_fasta(dic):
-    """
-    Export a dictionary, {k:v}, where k is the
-    sequence name, and v is the sequence, in
-    fasta format.
-    """
+    """Export a dictionary."""
     fasta = ""
     for (k, v) in dic.iteritems():
         fasta += ">%s\n%s\n" % (k, v)
@@ -37,7 +31,7 @@ def export_fasta(dic):
 
 
 def seq_names(fasta_file):
-    """Get sequence names from fasta file"""
+    """Get sequence names from fasta file."""
     names = []
     f = open(fasta_file)
     fasta = f.read()
@@ -48,10 +42,7 @@ def seq_names(fasta_file):
 
 
 def stockholm2fasta(stockholm):
-    """
-    Convert alignment in stockholm format to
-    fasta format.
-    """
+    """Convert alignment in stockholm format to fasta format."""
     fasta = ""
     for line in stockholm.split("\n"):
         # comment line
