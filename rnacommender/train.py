@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Train a model."""
 
 from __future__ import print_function
 
@@ -7,11 +8,9 @@ import cPickle
 import sys
 import time
 
-import pandas as pd
-
-
 from rnacommender.data import TrainDataset
 from rnacommender.model import Model
+from rnacommender.utils import feature_size, save_serendipity_dic
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -22,13 +21,15 @@ __status__ = "Production"
 
 
 class Trainer():
-    """Train a model on a dataset"""
+    """Train a model on a dataset."""
 
     def __init__(self, train_dataset, model, num_epochs, save_model,
                  verbose=True):
         """
-        Params
-        ------
+        Constructor.
+
+        Parameters
+        ----------
         train_dataset : data.TrainDataset
             Dataset containing the training examples.
 
@@ -52,7 +53,7 @@ class Trainer():
         self.verbose = verbose
 
     def _train_epoch(self):
-        """Perform one train epoch"""
+        """Perform one train epoch."""
         start_time = time.time()
         for (P, R, I) in self.train_dataset:
             self.model.train(P, R, I)
@@ -62,7 +63,7 @@ class Trainer():
         return train_time
 
     def _test_epoch(self):
-        """Compute the cost on the training set"""
+        """Compute the cost on the training set."""
         cumcost = 0.
         batches = 0
         for (P, R, I) in self.train_dataset:
@@ -72,13 +73,13 @@ class Trainer():
         return (cumcost / batches)
 
     def _print_monitor(self, cost, time=0.):
-        """Monitoring step"""
+        """Monitoring step."""
         print("Epoch %i, cost: %f, elapsed time: %.1f sec" %
               (self.epoch, cost, time))
         sys.stdout.flush()
 
     def _save_model(self):
-        """Dump a model to a pkl"""
+        """Dump a model to a pkl."""
         f = open(self.save_model, "w")
         cPickle.dump(self.model, f, protocol=2)
         f.close()
@@ -86,7 +87,7 @@ class Trainer():
         sys.stdout.flush()
 
     def train(self):
-        """Train the model"""
+        """Train the model."""
         if self.verbose:
             cumcost = self._test_epoch()
             self._print_monitor(cumcost)
@@ -145,13 +146,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    def feature_size(store_name):
-        """Number of features"""
-        store = pd.io.pytables.HDFStore(store_name)
-        a = store.features
-        store.close()
-        return a.shape[0]
-
     # Define model
     M = Model(sp=feature_size(args.Fp), sr=feature_size(args.Fr),
               kp=args.kp, kr=args.kr, learning_rate=args.learning_rate,
@@ -169,3 +163,5 @@ if __name__ == '__main__':
     T = Trainer(train_dataset=dataset, model=M, num_epochs=args.train_epochs,
                 save_model=args.save_model, verbose=(not args.quiet))
     T.train()
+
+    save_serendipity_dic(args.Y, args.save_model + "_")

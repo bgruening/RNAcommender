@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Recommend RNAs."""
 
 from __future__ import print_function
 
@@ -7,9 +8,8 @@ import cPickle
 import sys
 from itertools import izip
 
-import pandas as pd
-
 from rnacommender.data import PredictDataset
+from rnacommender.utils import get_serendipity_val
 
 __author__ = "Gianluca Corrado"
 __copyright__ = "Copyright 2016, Gianluca Corrado"
@@ -20,11 +20,14 @@ __status__ = "Production"
 
 
 class Predictor():
+    """Predict interactions."""
 
-    def __init__(self, predict_dataset, trained_model, output=None,
-                 verbose=True):
+    def __init__(self, predict_dataset, trained_model, serendipity_dic=None,
+                 output=None, verbose=True):
         """
-        Params
+        Constructor.
+
+        Parameters
         ------
         predict_dataset : data.PredictDataset
             Dataset containing the examples to predict.
@@ -32,8 +35,11 @@ class Predictor():
         trained_model : str
             File name of the trained model.
 
+        serendipity_dic : dict (default : None)
+            Dictionary with serendipy values.
+
         output : str (default : None)
-            Output file. If None then STDOUT
+            Output file. If None then STDOUT.
 
         verbose : bool (default : True)
             Print information at STDOUT.
@@ -42,11 +48,17 @@ class Predictor():
         f = open(trained_model)
         self.model = cPickle.load(f)
         f.close()
+        try:
+            f = open(serendipity_dic)
+            self.serendipity_dic = cPickle.load(f)
+            f.close()
+        except:
+            self.serendipity_dic = None
         self.output = output
         self.verbose = verbose
 
     def predict(self):
-        "Predict interaction values"
+        """Predict interaction values."""
         if self.verbose:
             print("Predicting interactions...", end=' ')
             sys.stdout.flush()
@@ -66,16 +78,29 @@ class Predictor():
 
         # output to STDOUT
         if self.output is None:
-            print("RBP\ttarget\ty_hat")
-            for (p_, r_, s_) in izip(p_names, r_names, y_hat):
-                print("%s\t%s\t%.3f" % (p_, r_, s_))
-                sys.stdout.flush()
+            print("RBP\ttarget\ty_hat\tserendipity")
+            if self.serendipity_dic is None:
+                for (p_, r_, s_) in izip(p_names, r_names, y_hat):
+                    print("%s\t%s\t%.3f\t---" % (p_, r_, s_))
+                    sys.stdout.flush()
+            else:
+                for (p_, r_, s_) in izip(p_names, r_names, y_hat):
+                    print("%s\t%s\t%.3f\t%.3f" %
+                          (p_, r_, s_,
+                           get_serendipity_val(self.serendipity_dic, r_)))
+                    sys.stdout.flush()
         # output to file
         else:
             nf = open(self.output, "w")
-            nf.write("RBP\ttarget\ty_hat\n")
-            for (p_, r_, s_) in izip(p_names, r_names, y_hat):
-                nf.write("%s\t%s\t%.3f\n" % (p_, r_, s_))
+            nf.write("RBP\ttarget\ty_hat\tserendipity\n")
+            if self.serendipity_dic is None:
+                for (p_, r_, s_) in izip(p_names, r_names, y_hat):
+                    nf.write("%s\t%s\t%.3f\n" % (p_, r_, s_))
+            else:
+                for (p_, r_, s_) in izip(p_names, r_names, y_hat):
+                    nf.write("%s\t%s\t%.3f\t%.3f" %
+                             (p_, r_, s_,
+                              get_serendipity_val(self.serendipity_dic, r_)))
             nf.close()
 
 if __name__ == '__main__':
@@ -107,13 +132,6 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    def feature_size(store_name):
-        """Number of features"""
-        store = pd.io.pytables.HDFStore(store_name)
-        a = store.features
-        store.close()
-        return a.shape[0]
-
     # Define and instantiate dataset
     D = PredictDataset(Fp=args.Fp, Fr=args.Fr, to_predict=args.to_predict,
                        standardize_proteins=args.standardize_Fp,
@@ -123,5 +141,6 @@ if __name__ == '__main__':
 
     # Define the Trainer and train the model
     P = Predictor(predict_dataset=dataset, trained_model=args.model,
+                  serendipity_dic=args.model + "_",
                   output=args.output, verbose=(not args.quiet))
     P.predict()
