@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Prepare interaction matrix from interaction list."""
 
 from __future__ import print_function
 
@@ -19,13 +20,15 @@ __status__ = "Production"
 
 
 class InteractionMatrix():
-    """Prepare interaction matrix from interaction list"""
+    """Prepare interaction matrix from interaction list."""
 
     def __init__(self, interaction_list, output, low_throughput_rbps=None,
                  verbose=True):
         """
-        Params
-        ------
+        Constructor.
+
+        Parameters
+        ----------
         interaction_list : str
             File containing the interaction list. Comments and header
             must start with #.
@@ -54,6 +57,7 @@ class InteractionMatrix():
         self.verbose = verbose
 
     def prepare(self):
+        """Construct the interaction matrix."""
         if self.verbose:
             print("Preparing interaction matrix for", end=' ')
         # read interaction list
@@ -98,7 +102,7 @@ if __name__ == '__main__':
                         (tab separated).""")
     parser.add_argument('output', metavar='output', type=str,
                         help="""File name of the HDF Store to save the \
-                        intereaction matrix.""")
+                        interaction matrix.""")
     parser.add_argument('--low', metavar='low_throughput_rbps', type=str,
                         default=None, help="""File containing a list (new line \
                         separated) of RBPs with low-throughput evidence only. \
