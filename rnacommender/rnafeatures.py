@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Compute the RNA features."""
 
 from __future__ import print_function
 
@@ -23,14 +24,16 @@ __status__ = "Production"
 
 
 class RNAVectorizer():
-    """Compute the RNA features"""
+    """Compute the RNA features."""
 
     def __init__(self, fasta, output, window_size=150, max_bp_span=40,
                  avg_bp_prob_cutoff=0.4, complexity=2, nbits=10,
                  njobs=-1, verbose=True):
         """
-        Params
-        ------
+        Constructor.
+
+        Parameters
+        ----------
         fasta : str
             Fasta file containing the RNA sequences.
 
@@ -75,7 +78,7 @@ class RNAVectorizer():
         self.verbose = verbose
 
     def _fold_sequences(self):
-        """ Fold the RNA sequences using RNAplfold"""
+        """Fold the RNA sequences using RNAplfold."""
         if self.verbose:
             print("Folding sequences using RNAplfold -W %i -L %i -c %f \
                 --noLP..." % (self.window_size, self.max_bp_span,
@@ -94,7 +97,7 @@ class RNAVectorizer():
         return graphs
 
     def _vectorize_graphs(self, graphs):
-        """Vectorize the RNAplfold graphs using EDeN"""
+        """Vectorize the RNAplfold graphs using EDeN."""
         if self.verbose:
             print("Vectorizing (complexity: %i, hashing: %i bits)..." %
                   (self.complexity, self.nbits), end=' ')
@@ -109,7 +112,7 @@ class RNAVectorizer():
         return x_sparse.todense()
 
     def vectorize(self):
-        """Produce the RNAfeatures"""
+        """Produce the RNAfeatures."""
         names = fasta_utils.seq_names(self.fasta)
 
         graphs = self._fold_sequences()
