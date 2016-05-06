@@ -1,3 +1,4 @@
+"""Recommender model."""
 from __future__ import print_function
 
 import sys
@@ -16,13 +17,15 @@ __status__ = "Production"
 
 
 class Model():
-    """Factorization model"""
+    """Factorization model."""
 
     def __init__(self, sp, sr, kp, kr, irange=0.01, learning_rate=0.01,
                  lambda_reg=0.01, verbose=True, seed=1234):
         """
-        Params
-        ------
+        Constructor.
+
+        Parameters
+        ----------
         sp : int
             Number of protein features.
 
@@ -50,7 +53,6 @@ class Model():
         seed : int (default : 1234)
             Seed for random number generator.
         """
-
         if verbose:
             print("Compiling model...", end=' ')
             sys.stdout.flush()
@@ -87,8 +89,7 @@ class Model():
         y_hat = T.nnet.sigmoid(T.sum(T.dot(p, self.B) * r, axis=1))
 
         def _regularization():
-            """Frobenius norm of the parameters, normalized by the size of
-            the matrices"""
+            """Normalized Frobenius norm."""
             norm_proteins = self.Ap.norm(2) + self.bp.norm(2)
             norm_rnas = self.Ar.norm(2) + self.br.norm(2)
             norm_b = self.B.norm(2)
@@ -134,7 +135,7 @@ class Model():
             sys.stdout.flush()
 
     def get_params(self):
-        """Return the parameters of the model"""
+        """Return the parameters of the model."""
         return {'Ap': self.Ap.get_value(), 'bp': self.bp.get_value(),
                 'Ar': self.Ar.get_value(), 'br': self.br.get_value(),
                 'B': self.B.get_value()}
