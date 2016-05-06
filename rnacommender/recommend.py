@@ -85,7 +85,7 @@ class Predictor():
                     sys.stdout.flush()
             else:
                 for (p_, r_, s_) in izip(p_names, r_names, y_hat):
-                    print("%s\t%s\t%.3f\t%.3f" %
+                    print("%s\t%s\t%.3f\t%.2f" %
                           (p_, r_, s_,
                            get_serendipity_val(self.serendipity_dic, r_)))
                     sys.stdout.flush()
@@ -95,10 +95,10 @@ class Predictor():
             nf.write("RBP\ttarget\ty_hat\tserendipity\n")
             if self.serendipity_dic is None:
                 for (p_, r_, s_) in izip(p_names, r_names, y_hat):
-                    nf.write("%s\t%s\t%.3f\n" % (p_, r_, s_))
+                    nf.write("%s\t%s\t%.3f\t---\n" % (p_, r_, s_))
             else:
                 for (p_, r_, s_) in izip(p_names, r_names, y_hat):
-                    nf.write("%s\t%s\t%.3f\t%.3f" %
+                    nf.write("%s\t%s\t%.3f\t%.2f\n" %
                              (p_, r_, s_,
                               get_serendipity_val(self.serendipity_dic, r_)))
             nf.close()
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Define and instantiate dataset
-    D = PredictDataset(Fp=args.Fp, Fr=args.Fr, to_predict=args.to_predict,
+    D = PredictDataset(fp=args.Fp, fr=args.Fr, to_predict=args.to_predict,
                        standardize_proteins=args.standardize_Fp,
                        standardize_rnas=args.standardize_Fr,
                        verbose=(not args.quiet))
