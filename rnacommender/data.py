@@ -241,7 +241,8 @@ class PredictDataset(Dataset):
         super(PredictDataset, self).__init__(
             fp, fr, standardize_proteins, standardize_rnas, verbose)
         self.to_predict = to_predict
-        self.Fp = self.Fp[self.to_predict]
+        if self.to_predict is not None:
+            self.Fp = self.Fp[self.to_predict]
 
     def load(self):
         """
