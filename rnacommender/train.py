@@ -153,7 +153,7 @@ if __name__ == '__main__':
               seed=args.seed)
 
     # Define and instantiate dataset
-    D = TrainDataset(Fp=args.Fp, Fr=args.Fr, Y=args.Y,
+    D = TrainDataset(fp=args.Fp, fr=args.Fr, y=args.Y,
                      standardize_proteins=args.standardize_Fp,
                      standardize_rnas=args.standardize_Fr,
                      verbose=(not args.quiet), seed=args.seed)
