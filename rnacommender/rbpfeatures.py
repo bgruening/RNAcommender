@@ -38,7 +38,7 @@ class RBPVectorizer():
         ----------
         fasta_ref : str
             Fasta file containing the reference sequences. The similarity will
-            be computedagainst the reference sequences.
+            be computed against the reference sequences.
 
         fasta_sel : str
             Fasta file containing the selected sequences. The similarity will
