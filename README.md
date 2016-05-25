@@ -14,7 +14,6 @@ Include the following executable files in your PATH:
     - numpy 1.8.1
     - pandas 0.17.1
     - tables 3.2.2.dev0
-    - scikit-learn 0.18.dev0
     - Theano 0.7
 
 * The RNAfeatures are generated using EDeN. You can install EDeN with pip directly from github.
