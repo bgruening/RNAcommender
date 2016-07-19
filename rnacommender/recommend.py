@@ -4,7 +4,10 @@
 from __future__ import print_function
 
 import argparse
-import cPickle
+try:
+    import cPickle as pickle
+except:
+    import pickle
 import sys
 from itertools import izip
 
