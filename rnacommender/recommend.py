@@ -49,11 +49,11 @@ class Predictor():
         """
         self.predict_dataset = predict_dataset
         f = open(trained_model)
-        self.model = cPickle.load(f)
+        self.model = pickle.load(f)
         f.close()
         try:
             f = open(serendipity_dic)
-            self.serendipity_dic = cPickle.load(f)
+            self.serendipity_dic = pickle.load(f)
             f.close()
         except:
             self.serendipity_dic = None
