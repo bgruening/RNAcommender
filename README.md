@@ -1,8 +1,8 @@
 # RNAcommender
 RNAcommender is a tool for genome-wide recommendation of RNA-protein interactions. It is a recommender system capable of suggesting RNA targets to unexplored RNA binding proteins, by propagating the available interaction information, taking into account the protein domain composition and the RNA predicted secondary structure.
 
-If you use this tool in your research please cite:
-G. Corrado, T.Tebaldi, F. Costa, P. Frasconi and A. Passerini. "RNAcommender: genome-wide recommendation of RNA-protein interactions" Bioinformatics, 2016.
+
+**G. Corrado, T. Tebaldi, F. Costa, P. Frasconi and A. Passerini. "RNAcommender: genome-wide recommendation of RNA-protein interactions" Bioinformatics, 2016.**
 
 Requirements
 ------------
