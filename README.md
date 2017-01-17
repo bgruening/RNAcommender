@@ -19,11 +19,8 @@ Include the following executable files in your PATH:
     - tables 3.2.2.dev0
     - Theano 0.7
 
-* The RNAfeatures are generated using EDeN. You can install EDeN with pip directly from github.
+* The RNAfeatures are generated using [[EDeN Mercury (v1.0)](https://github.com/fabriziocosta/EDeN/releases/tag/v1.0)].
 
-```bash
-pip install git+https://github.com/fabriziocosta/EDeN.git --user
-```
 
 Training
 ========
