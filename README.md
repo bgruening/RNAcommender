@@ -10,7 +10,7 @@ Include the following executable files in your PATH:
 * From SAM (3.5) [[download](https://compbio.soe.ucsc.edu/sam2src/)]:
     - build_model
     - get_fisher_scores
-* From the Vienna RNA package (2.1.8) [[download](https://www.tbi.univie.ac.at/RNA/)]:
+* From the Vienna RNA package (2.1.8) [download](https://www.tbi.univie.ac.at/RNA/):
     - RNAplfold
 
 * Python packages required (and versions used during development):
