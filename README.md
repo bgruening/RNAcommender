@@ -95,10 +95,10 @@ We added again the flag ```--standardize-Fr``` to match the case used during tra
 
 It is also possible to specify one or more protein that will be included in the results (all the others will be discarded). For example:
 ```bash
-./recommend.py ../examples/rbps_new.h5  ../examples/utrs.h5 ../examples/trained_from_AURA_HT.pkl --output ../examples/recommendations.txt --standardize-Fr --to-predict RALY
+./recommend.py ../examples/rbps_new.h5  ../examples/utrs.h5 ../examples/trained_from_AURA_HT.pkl --output ../examples/recommendations.txt --standardize-Fr --to-predict HNRNPR
 ```
-will recommend RNA targets only to the protein RALY, while:
+will recommend RNA targets only to the protein HNRNPR, while:
 ```bash
-./recommend.py ../examples/rbps_new.h5  ../examples/utrs.h5 ../examples/trained_from_AURA_HT.pkl --output ../examples/recommendations.txt --standardize-Fr --to-predict ANKHD1 RALY
+./recommend.py ../examples/rbps_new.h5  ../examples/utrs.h5 ../examples/trained_from_AURA_HT.pkl --output ../examples/recommendations.txt --standardize-Fr --to-predict HNRNPR SYNCRIP
 ```
-will recommend RNA targets to the proteins ANKHD1 and RALY.
+will recommend RNA targets to the proteins HNRNPR and SYNCRIP.
